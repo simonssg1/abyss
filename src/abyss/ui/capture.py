@@ -59,6 +59,13 @@ def capture_screens(outdir: str | Path) -> list[str]:
         ctrl = AppController(presets, Config(), audio=False, hotkeys=False,
                              user_presets_path=Path(tempfile.mkdtemp()) / "presets.toml")
         ctrl.level_source = _fake_levels()
+        # Périphériques fictifs : les captures (publiées dans le dépôt) ne montrent pas les vrais noms.
+        ctrl._input_devices = ["Micro MacBook Pro", "Micro USB"]
+        ctrl._output_devices = ["BlackHole 2ch", "Casque", "Haut-parleurs MacBook Pro"]
+        ctrl._virtual_found = True
+        ctrl.cfg.input_device, ctrl.cfg.virtual_device, ctrl.cfg.monitor_device = "Micro MacBook Pro", "BlackHole 2ch", "Casque"
+        ctrl._device_timer.stop()
+        ctrl.devicesChanged.emit()
         engine = create_engine()
         win = load_main(engine, ctrl)
         win.setWidth(w)

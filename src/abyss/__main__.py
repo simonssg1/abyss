@@ -98,7 +98,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--headless", action="store_true", help="temps réel sans interface")
     parser.add_argument("--presets", type=Path, help="fichier presets.toml à utiliser")
     parser.add_argument("--gallery", action="store_true", help="galerie des composants de l'interface")
-    parser.add_argument("--classic", action="store_true", help="ancienne interface (Widgets)")
     parser.add_argument("--no-audio", action="store_true", help="GUI sans streams audio (tests)")
     parser.add_argument("--quit-after", type=float, metavar="S", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
@@ -152,12 +151,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.headless:
         name = args.preset or (cfg.last_preset if find_preset(presets, cfg.last_preset) else None)
         return run_headless(presets, pick(name), cfg)
-
-    if args.classic:
-        from abyss.gui.main_window import run_gui
-
-        return run_gui(presets, cfg, audio=not args.no_audio, quit_after=args.quit_after,
-                       initial_preset=args.preset)
 
     from abyss.ui.app import run_app
 

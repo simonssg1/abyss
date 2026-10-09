@@ -98,13 +98,13 @@ Item {
                          : app.micPermission === "denied" ? "fail" : "pending"
                     label: "Accès au micro"
                     help: app.micPermission === "denied"
-                          ? "Autorise Abyss dans Réglages Système → Confidentialité et sécurité → Micro."
+                          ? "Autorise " + app.permissionTarget + " dans Réglages Système → Confidentialité et sécurité → Micro."
                           : "L'accès sera demandé au premier démarrage du direct."
                 }
                 CheckRow {
                     status: app.hotkeysOk ? "ok" : "fail"
                     label: "Raccourcis clavier actifs"
-                    help: "Autorise Abyss dans Accessibilité et Surveillance de l'entrée (Réglages Système)."
+                    help: "Autorise " + app.permissionTarget + " dans Accessibilité et Surveillance de l'entrée (Réglages Système)."
                 }
             }
         }

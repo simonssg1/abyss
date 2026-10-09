@@ -9,7 +9,17 @@ from PySide6.QtCore import QObject, Signal
 
 log = logging.getLogger("abyss.hotkeys")
 
-PERMISSION_HINT = ("Autorise ton terminal dans Réglages Système → Confidentialité et sécurité → "
+import os
+
+BUNDLE_ID = "com.simonssg1.abyss"
+
+
+def permission_target() -> str:
+    """À qui macOS attribue les autorisations : l'app Abyss (lanceur) ou le terminal (uv run)."""
+    return "Abyss" if os.environ.get("__CFBundleIdentifier") == BUNDLE_ID else "ton terminal"
+
+
+PERMISSION_HINT = (f"Autorise {permission_target()} dans Réglages Système → Confidentialité et sécurité → "
                    "Accessibilité et Surveillance de l'entrée")
 
 
@@ -59,11 +69,13 @@ class HotkeyBridge(QObject):
             self._listener.wait()
         except Exception as e:
             return self._fail(str(e))
-        if sys.platform == "darwin" and not getattr(self._listener, "IS_TRUSTED", True):
-            self.stop()
-            return self._fail("permissions manquantes")
+        # macOS : si la « Surveillance de l'entrée » est refusée, pynput ne peut pas créer son
+        # event tap et son thread s'arrête aussitôt. (Son avertissement « not trusted » ne concerne
+        # que l'Accessibilité, inutile pour une écoute passive : on ne s'y fie pas.)
+        self._listener.join(timeout=0.3)
         if not self._listener.is_alive():
-            return self._fail("le listener s'est arrêté")
+            self._listener = None
+            return self._fail("permissions manquantes" if sys.platform == "darwin" else "le listener s'est arrêté")
         self.active = True
         self.status = "actifs"
         return True

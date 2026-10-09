@@ -17,3 +17,7 @@ samples/*.wav
 models/**/*.onnx
 models/**/*.pth
 models/**/*.index
+
+# Icône macOS générée par scripts/build_icons.py
+src/abyss/ui/assets/icon/Abyss.icns
+src/abyss/ui/assets/icon/Abyss.iconset/

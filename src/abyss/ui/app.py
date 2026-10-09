@@ -10,7 +10,7 @@ from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuickControls2 import QQuickStyle
 
-from abyss.ui.resources import QML_DIR, IconProvider, load_fonts
+from abyss.ui.resources import ICON_DIR, QML_DIR, IconProvider, load_fonts
 
 log = logging.getLogger("abyss.ui")
 
@@ -36,7 +36,18 @@ def create_app(argv: list[str] | None = None) -> QGuiApplication:
         QQuickStyle.setStyle("Basic")  # style personnalisable, identique sur macOS et Windows
         app = QGuiApplication(argv if argv is not None else sys.argv)
     app.setApplicationName("Abyss")
+    app.setApplicationDisplayName("Abyss")
     app.setOrganizationName("Abyss")
+    from PySide6.QtGui import QIcon
+
+    icon = QIcon()
+    for size in (16, 32, 64, 128, 256, 512, 1024):
+        png = ICON_DIR / "png" / f"abyss-{size}.png"
+        if png.is_file():
+            icon.addFile(str(png))
+    if icon.isNull():
+        icon = QIcon(str(ICON_DIR / "abyss.svg"))
+    app.setWindowIcon(icon)  # icône de fenêtre (et du Dock sur macOS)
     load_fonts(app)
     qInstallMessageHandler(_message_handler)
     return app
@@ -72,13 +83,59 @@ def load_main(engine, controller):
     return roots[0] if roots else None
 
 
+SERVER_NAME = "abyss-single-instance"
+
+
+def _server_name() -> str:
+    """Un nom par utilisateur (dossier personnel) : deux comptes, ou les tests, ne se gênent pas."""
+    import hashlib
+    from pathlib import Path
+
+    return f"{SERVER_NAME}-{hashlib.sha1(str(Path.home()).encode()).hexdigest()[:10]}"
+
+
+def notify_running_instance() -> bool:
+    """True si une instance d'Abyss tourne déjà (elle est alors ramenée au premier plan)."""
+    from PySide6.QtNetwork import QLocalSocket
+
+    sock = QLocalSocket()
+    sock.connectToServer(_server_name())
+    if not sock.waitForConnected(300):
+        return False
+    sock.write(b"raise\n")
+    sock.waitForBytesWritten(300)
+    sock.disconnectFromServer()
+    return True
+
+
+def start_instance_server(controller):
+    from PySide6.QtNetwork import QLocalServer
+
+    server = QLocalServer(controller)
+    QLocalServer.removeServer(_server_name())  # socket orphelin d'un lancement précédent
+    if server.listen(_server_name()):
+        def on_connection():
+            conn = server.nextPendingConnection()
+            if conn is not None:
+                conn.readyRead.connect(lambda c=conn: (c.readAll(), controller.raiseRequested.emit()))
+                conn.disconnected.connect(conn.deleteLater)
+                controller.raiseRequested.emit()
+        server.newConnection.connect(on_connection)
+    return server
+
+
 def run_app(presets, cfg, audio: bool = True, quit_after: float | None = None,
-            initial_preset: str | None = None, defaults=None) -> int:
+            initial_preset: str | None = None, defaults=None, single_instance: bool = True) -> int:
     from PySide6.QtCore import QTimer
 
+    from abyss.platform.macos import set_process_name
     from abyss.ui.controller import AppController
 
+    set_process_name("Abyss")
     app = create_app()
+    if single_instance and notify_running_instance():
+        log.info("Abyss tourne déjà : fenêtre existante ramenée au premier plan")
+        return 0
     controller = AppController(presets, cfg, audio=audio, defaults=defaults)
     if initial_preset:
         p = controller.presetModel.find(initial_preset.lower()) or next(
@@ -90,6 +147,8 @@ def run_app(presets, cfg, audio: bool = True, quit_after: float | None = None,
     if window is None:
         return 1
     app.aboutToQuit.connect(controller.shutdown)
+    if single_instance:
+        controller._instance_server = start_instance_server(controller)
     QTimer.singleShot(0, controller.start_hotkeys)
     if quit_after:
         QTimer.singleShot(int(quit_after * 1000), window.close)

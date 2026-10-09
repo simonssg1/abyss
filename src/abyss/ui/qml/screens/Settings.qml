@@ -134,7 +134,7 @@ Item {
                 }
                 Warning {
                     visible: !app.hotkeysOk
-                    text: "Autorise Abyss dans Réglages Système → Confidentialité et sécurité → Accessibilité et Surveillance de l'entrée."
+                    text: "Autorise " + app.permissionTarget + " dans Réglages Système → Confidentialité et sécurité → Accessibilité et Surveillance de l'entrée."
                 }
                 Repeater {
                     model: app.hotkeyList

@@ -96,6 +96,7 @@ class AppController(QObject):
         self._hotkeys_ok = False
         self._hotkeys_status = "inactifs"
         self._mic_permission = microphone_status()
+        log.info("Autorisation micro : %s", self._mic_permission)
         self._preview_playing = False
         self._preview_id = ""
         self.level_source = None  # callable () -> (entrée, sortie), pour la démo et les captures
@@ -310,6 +311,12 @@ class AppController(QObject):
             self.previewChanged.emit()
 
     @Property(str, constant=True)
+    def permissionTarget(self) -> str:
+        from abyss.hotkeys import permission_target
+
+        return permission_target()
+
+    @Property(str, constant=True)
     def version(self) -> str:
         return __version__
 
@@ -363,7 +370,7 @@ class AppController(QObject):
         err = self.engine.metrics.error or "Erreur inconnue"
         if self._mic_permission == "denied":
             self.toast.emit("error", "Accès au micro refusé",
-                            "Autorise Abyss dans Réglages Système → Confidentialité et sécurité → Micro.")
+                            f"Autorise {self.permissionTarget} dans Réglages Système → Confidentialité et sécurité → Micro.")
         else:
             self.toast.emit("error", "Impossible de démarrer le direct", err)
 

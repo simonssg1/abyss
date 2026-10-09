@@ -16,3 +16,6 @@
 - Ring buffers : entrée 16 blocs, sorties 4 blocs (débordement → on jette le plus ancien), sorties amorcées avec 2 blocs de silence (niveau cible). Le retour casque est un stream 2 canaux (mono dupliqué) pour sortir des deux côtés.
 - Le rendu (`--render`) passe par le même `Pipeline` que le temps réel, débruitage inclus ; WAV de sortie en float32.
 - `config.py` écrit dès la phase 4 (le mode `--headless` lit les périphériques et réglages enregistrés, sinon auto-détection).
+- Raccourcis macOS : si pynput signale « process not trusted » (`IS_TRUSTED` faux), le listener est arrêté et l'interface affiche le message d'autorisation ; l'app continue sans raccourcis. Des raccourcis `preset_9` existent dans la config (pour un 9e preset éventuel).
+- GUI : le stream casque reste ouvert dès qu'un casque est choisi ; la case « Retour casque » ne fait qu'activer l'écriture (pas de redémarrage des streams). Option `--no-audio` (et `--quit-after S`, cachée) pour le smoke test.
+- La fenêtre dépasse un peu 640 px de haut quand des avertissements sont affichés (contenu prioritaire sur la taille).

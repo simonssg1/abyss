@@ -97,6 +97,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--renders-dir", type=Path, default=Path("renders"), help=argparse.SUPPRESS)
     parser.add_argument("--headless", action="store_true", help="temps réel sans interface")
     parser.add_argument("--presets", type=Path, help="fichier presets.toml à utiliser")
+    parser.add_argument("--gallery", action="store_true", help="galerie des composants de l'interface")
     parser.add_argument("--no-audio", action="store_true", help="GUI sans streams audio (tests)")
     parser.add_argument("--quit-after", type=float, metavar="S", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
@@ -107,6 +108,11 @@ def main(argv: list[str] | None = None) -> int:
 
         print(format_device_list())
         return 0
+
+    if args.gallery:
+        from abyss.ui.app import run_gallery
+
+        return run_gallery(quit_after=args.quit_after)
 
     from abyss.config import load_config
     from abyss.presets import find_preset, load_presets

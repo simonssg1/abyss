@@ -28,3 +28,11 @@
 - Renommage : paquet `src/abyss`, loggers `abyss.*`, thread `abyss-dsp`. Le type d'effet `vocoder` (vocodeur à canaux) et le module `processors/vocoder.py` gardent leur nom (c'est l'effet, pas l'app).
 - Config : `~/.abyss/config.json` ; au premier `load_config()`, l'ancienne `~/.vocoder/config.json` est copiée (jamais déplacée ni écrasée).
 - Le dossier local du dépôt reste `~/vocoder` (non renommé : hors périmètre, il n'a pas été demandé).
+- Design system : `src/abyss/ui/qml/theme` (module `theme`, singleton `Theme`) et `components` (module `components`, qmldir) ajoutés au chemin d'import du moteur QML. Style Qt Quick Controls « Basic » forcé (personnalisable et identique macOS/Windows).
+- Icônes Lucide recolorées par un `QQuickImageProvider` Python (`image://icon/<nom>/<couleur>`) qui remplace `currentColor` dans le SVG : rendu net, couleur du thème. Lucide a renommé certaines icônes : `ellipsis` (= more-horizontal), `triangle-alert` (= alert-triangle), `trash` (pas de trash-2).
+- Inter 4.1 : fichiers statiques Regular/Medium/SemiBold (dossier `extras/ttf` de la release officielle) + `OFL.txt` ; police appliquée à toute l'app via `QGuiApplication.setFont`, `Theme.fontFamily` suit `Qt.application.font.family` (repli système automatique).
+- Composant à deux poignées nommé `AbyssRangeSlider` (et non `RangeSlider`) pour ne pas masquer le type `RangeSlider` de QtQuick.Controls.
+- Jetons dérivés dans Theme (transparences de la palette : `card`, `border`, `accentSoft`…) pour reproduire les cartes sombres à fin contour de la charte ; `danger` = `#E5484D`. Taille `bodySmall` 14 px ajoutée pour boutons/puces.
+- Micro du logo et de l'anneau : SVG maison (`assets/icon/mic-glyph.svg`, `mic-capsule.svg`) inspirés de la charte (capsule lavande, support et barres turquoise).
+- Captures hors écran : la plateforme `offscreen` force le rendu logiciel, où `MultiEffect` (lueur) ne s'affiche pas. L'anneau a donc aussi un halo en dégradé radial (Shapes) visible partout ; la lueur MultiEffect s'ajoute en rendu GPU (app réelle).
+- Détection des warnings QML : gestionnaire de messages Qt + signal `engine.warnings` ; l'outil `python -m abyss.ui.capture` renvoie 1 au moindre warning (utilisé par les tests).

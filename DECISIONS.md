@@ -36,3 +36,10 @@
 - Micro du logo et de l'anneau : SVG maison (`assets/icon/mic-glyph.svg`, `mic-capsule.svg`) inspirés de la charte (capsule lavande, support et barres turquoise).
 - Captures hors écran : la plateforme `offscreen` force le rendu logiciel, où `MultiEffect` (lueur) ne s'affiche pas. L'anneau a donc aussi un halo en dégradé radial (Shapes) visible partout ; la lueur MultiEffect s'ajoute en rendu GPU (app réelle).
 - Détection des warnings QML : gestionnaire de messages Qt + signal `engine.warnings` ; l'outil `python -m abyss.ui.capture` renvoie 1 au moindre warning (utilisé par les tests).
+- Pont QML : `ui/controller.py` (`AppController`, propriétés en lecture + slots `setX`/`toggleX`), `ui/models.py` (`PresetModel` + `PresetFilterModel`). Le démarrage du direct ouvre les streams dans un thread à part (macOS peut bloquer le temps d'autoriser le micro) et revient par signal Qt.
+- « Couper la sortie » = gain de sortie du pipeline à −120 dB via l'API publique du moteur (`set_output_gain`), le gain réglé par l'utilisateur est restauré ensuite. Le retour casque est donc coupé aussi.
+- Intensité / égaliseur : nouveau processor `processors/mix.py` (`DryWet`, signal sec retardé de la latence des effets) ; `build_chain` = effets → DryWet(intensité) → passe-haut → passe-bas. Aux extrémités (50 Hz / 12 kHz) les filtres passent à 20 Hz / 0,45·fs (transparents). Réglage à chaud sans reconstruire la chaîne (`apply_live`, via `chain.controls`).
+- Format de presets étendu (`description`, `categories`, `icon`, `badge`, `intensity`, `tone_low_hz`, `tone_high_hz`), tous optionnels ; une valeur invalide reprend sa valeur par défaut avec un avertissement, sans rejeter le preset. `id` = nom « slugifié ».
+- Autorisation micro (checklist) lue via le runtime Objective-C avec `ctypes` (AVCaptureDevice), sans dépendance ; « unknown » hors macOS.
+- Entrée « Voix IA » : ligne synthétique du modèle (non cliquable, badge Bientôt, catégorie IA), absente des presets réels.
+- Version de l'app passée à 2.0.0 (`abyss.__version__`). Config : champs `show_welcome` et `window` ajoutés (rétrocompatibles).

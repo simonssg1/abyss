@@ -51,6 +51,8 @@ class Config:
     monitor_volume: float = 0.8
     output_gain_db: float = 0.0
     hotkeys: dict[str, str] = field(default_factory=default_hotkeys)
+    show_welcome: bool = True
+    window: list[int] | None = None  # [x, y, largeur, hauteur]
 
 
 def load_config(path: Path | None = None) -> Config:

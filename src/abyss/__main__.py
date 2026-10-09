@@ -118,7 +118,13 @@ def main(argv: list[str] | None = None) -> int:
     from abyss.config import load_config
     from abyss.presets import find_preset, load_presets
 
-    presets, _ = load_presets(args.presets)
+    if args.presets:
+        presets, _ = load_presets(args.presets)
+        defaults = presets
+    else:
+        from abyss.user_presets import load_all_presets
+
+        presets, defaults, _ = load_all_presets()
 
     def pick(name: str | None):
         if not name:
@@ -156,7 +162,7 @@ def main(argv: list[str] | None = None) -> int:
     from abyss.ui.app import run_app
 
     return run_app(presets, cfg, audio=not args.no_audio, quit_after=args.quit_after,
-                   initial_preset=args.preset)
+                   initial_preset=args.preset, defaults=defaults)
 
 
 if __name__ == "__main__":

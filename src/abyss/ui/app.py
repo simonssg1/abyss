@@ -73,13 +73,13 @@ def load_main(engine, controller):
 
 
 def run_app(presets, cfg, audio: bool = True, quit_after: float | None = None,
-            initial_preset: str | None = None) -> int:
+            initial_preset: str | None = None, defaults=None) -> int:
     from PySide6.QtCore import QTimer
 
     from abyss.ui.controller import AppController
 
     app = create_app()
-    controller = AppController(presets, cfg, audio=audio)
+    controller = AppController(presets, cfg, audio=audio, defaults=defaults)
     if initial_preset:
         p = controller.presetModel.find(initial_preset.lower()) or next(
             (q for q in presets if q.name.lower() == initial_preset.lower()), None)

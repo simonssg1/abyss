@@ -12,6 +12,7 @@ from pathlib import Path
 from abyss.processors.base import Chain
 from abyss.processors.fx import FX_TYPES, make_fx
 from abyss.processors.mix import DryWet
+from abyss.processors.tap import VOICE_TAP
 from abyss.processors.robot import RingModulator
 from abyss.processors.vocoder import ChannelVocoder
 
@@ -213,7 +214,7 @@ def build_chain(preset: Preset | None, sample_rate: int = 48000, output_gain_db:
     `chain.controls` donne accès aux réglages modifiables à chaud (intensité, égaliseur).
     """
     if preset is None:
-        chain = Chain([], sample_rate, output_gain_db, name="bypass")
+        chain = Chain([VOICE_TAP], sample_rate, output_gain_db, name="bypass")
         chain.controls = {}
         return chain
     procs = []
@@ -227,7 +228,8 @@ def build_chain(preset: Preset | None, sample_rate: int = 48000, output_gain_db:
     drywet = DryWet(procs, sample_rate, preset.intensity)
     hp = make_fx("highpass", {"cutoff_frequency_hz": low}, sample_rate)
     lp = make_fx("lowpass", {"cutoff_frequency_hz": high}, sample_rate)
-    chain = Chain([drywet, hp, lp], sample_rate, output_gain_db, name=preset.name)
+    # VOICE_TAP : garde les dernières secondes de la voix (aperçu audio), uniquement si activé.
+    chain = Chain([VOICE_TAP, drywet, hp, lp], sample_rate, output_gain_db, name=preset.name)
     chain.controls = {"intensity": drywet, "tone_low": hp.plugin, "tone_high": lp.plugin}
     return chain
 

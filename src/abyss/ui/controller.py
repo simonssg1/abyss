@@ -19,6 +19,7 @@ from abyss.hotkeys import PERMISSION_HINT, HotkeyBridge
 from abyss.platform.permissions import microphone_status
 from abyss.presets import TONE_MAX_HZ, TONE_MIN_HZ, Preset, apply_live, preset_from_dict, slugify
 from abyss.processors.schema import EFFECT_SCHEMAS, complete_effect, default_effect
+from abyss.processors.tap import VOICE_TAP
 from abyss.ui.models import PresetFilterModel, PresetModel
 
 log = logging.getLogger("abyss.ui")
@@ -41,6 +42,8 @@ class AppController(QObject):
     toast = Signal(str, str, str)  # kind ("success" | "error"), titre, message
     raiseRequested = Signal()
     _startFinished = Signal(bool)
+    _previewReady = Signal(object, int, str, str)  # données, fréquence, clé, origine
+    _previewEnded = Signal()
 
     liveChanged = Signal()
     startingChanged = Signal()
@@ -58,11 +61,14 @@ class AppController(QObject):
     presetsChanged = Signal()
 
     def __init__(self, presets: list[Preset], cfg: Config, audio: bool = True, hotkeys: bool = True,
-                 parent: QObject | None = None):
+                 parent: QObject | None = None, defaults: list[Preset] | None = None,
+                 user_presets_path=None):
         super().__init__(parent)
         self.cfg = cfg
         self.audio = audio
-        self._defaults = {p.id: copy.deepcopy(p) for p in presets if not p.is_user}
+        self.user_presets_path = user_presets_path
+        base = defaults if defaults is not None else [p for p in presets if not p.is_user]
+        self._defaults = {p.id: copy.deepcopy(p) for p in base}
         self.presetModel = PresetModel(presets, cfg.hotkeys, self)
         self.presetFilter = PresetFilterModel(self.presetModel, self)
 
@@ -104,6 +110,15 @@ class AppController(QObject):
         self.hotkeys.monitor_requested.connect(self.toggleMonitor)
         self._want_hotkeys = hotkeys
         self._startFinished.connect(self._on_start_finished)
+        self._previewReady.connect(self._on_preview_ready)
+        self._previewEnded.connect(self._on_preview_ended)
+        from abyss.audio.preview import PreviewPlayer
+
+        self._player = PreviewPlayer(on_finished=self._previewEnded.emit)
+        self._save_timer = QTimer(self)
+        self._save_timer.setSingleShot(True)
+        self._save_timer.setInterval(800)
+        self._save_timer.timeout.connect(lambda: self._persist(self.presetModel.presets()))
 
         self._refresh_device_lists(initial=True)
 
@@ -231,8 +246,68 @@ class AppController(QObject):
 
     @Slot("QVariantMap")
     def togglePreview(self, draft: dict) -> None:
-        """Aperçu audio (phase 5)."""
-        self.toast.emit("error", "Aperçu indisponible", "L'aperçu audio arrive bientôt.")
+        """Aperçu : ≤ 5 s rendues par une instance séparée de la chaîne, jouées dans le casque uniquement."""
+        key = draft.get("id") or "__draft__"
+        if self._preview_playing:
+            same = key == self._preview_id
+            self.stopPreview()
+            if same:
+                return
+        preset, warnings = self._preset_from_draft(draft)
+        if preset is None:
+            self.toast.emit("error", "Aperçu impossible", warnings[0] if warnings else "Preset invalide.")
+            return
+        device = self._monitor_index()
+        if device is None:
+            self.toast.emit("error", "Casque non configuré",
+                            "Choisis un casque dans Réglages → Périphériques pour écouter l'aperçu. "
+                            "Il n'est jamais envoyé au micro virtuel.")
+            return
+        rate = self.engine.metrics.sample_rate if self._live and self.engine.metrics.sample_rate else 48000
+        self._preview_id = key
+        self._preview_playing = True
+        self.previewChanged.emit()
+        threading.Thread(target=self._render_preview, args=(preset, rate, key, device), daemon=True,
+                         name="abyss-preview").start()
+
+    def _monitor_index(self) -> int | None:
+        if not self.cfg.monitor_device:
+            return None
+        d = dv.find_by_name(self.cfg.monitor_device, "output")
+        return d.index if d else None
+
+    def _render_preview(self, preset: Preset, rate: int, key: str, device: int) -> None:
+        from abyss.audio.preview import pick_source, render_preview
+
+        captured, cap_rate = VOICE_TAP.snapshot()
+        source, origin = pick_source(captured if cap_rate == rate else captured[:0], rate)
+        data = render_preview(preset, source, rate, self.cfg.denoise, self.cfg.denoise_threshold_db)
+        self._preview_device = device
+        self._previewReady.emit(data, rate, key, origin)
+
+    def _on_preview_ready(self, data, rate: int, key: str, origin: str) -> None:
+        if not self._preview_playing or key != self._preview_id:
+            return  # annulé entre-temps
+        try:
+            self._player.play(data, rate, self._preview_device)
+        except Exception as e:
+            self._on_preview_ended()
+            self.toast.emit("error", "Aperçu impossible", str(e))
+            return
+        if origin != "micro":
+            self.toast.emit("success", "Aperçu avec la voix de test",
+                            "Lance le direct et parle quelques secondes pour l'entendre avec ta voix.")
+
+    @Slot()
+    def stopPreview(self) -> None:
+        self._player.stop()
+        self._on_preview_ended()
+
+    def _on_preview_ended(self) -> None:
+        if self._preview_playing:
+            self._preview_playing = False
+            self._preview_id = ""
+            self.previewChanged.emit()
 
     @Property(str, constant=True)
     def version(self) -> str:
@@ -281,6 +356,8 @@ class AppController(QObject):
         self._update_permission()
         if ok:
             self._apply_mute()
+            VOICE_TAP.configure(self.engine.metrics.sample_rate or 48000)
+            VOICE_TAP.enabled = True
             self._set_live(True)
             return
         err = self.engine.metrics.error or "Erreur inconnue"
@@ -296,6 +373,7 @@ class AppController(QObject):
             return
         if self.audio:
             self.engine.stop()
+        VOICE_TAP.enabled = False
         self._history.extend([0.0] * HISTORY)
         self._set_live(False)
 
@@ -349,7 +427,7 @@ class AppController(QObject):
         p.intensity = min(1.0, max(0.0, float(value)))
         self.apply_preset_live(p)
         self.presetModel.refresh(p.id)
-        self._intensity_dirty = True
+        self._save_timer.start()  # intensité enregistrée automatiquement (anti-rebond)
 
     def apply_preset_live(self, p: Preset, rebuild: bool = False) -> None:
         """Répercute les réglages d'un preset sur le direct s'il est actif."""
@@ -516,7 +594,12 @@ class AppController(QObject):
         return True
 
     def _persist(self, presets: list[Preset]) -> bool:
-        return True
+        from abyss.user_presets import save_user_presets
+
+        ok, err = save_user_presets(presets, self._defaults, self.user_presets_path)
+        if not ok:
+            self.toast.emit("error", "Presets non enregistrés", err or "Écriture impossible.")
+        return ok
 
     # ----- contrôles -----
     @Slot(bool)
@@ -700,6 +783,10 @@ class AppController(QObject):
 
     @Slot()
     def shutdown(self) -> None:
+        if self._save_timer.isActive():
+            self._save_timer.stop()
+            self._persist(self.presetModel.presets())
+        self._player.stop()
         self._timer.stop()
         self._device_timer.stop()
         if self.audio:

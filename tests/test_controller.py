@@ -18,7 +18,7 @@ def ctrl(qapp, tmp_path, monkeypatch):
 
     monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.json")
     presets, _ = load_presets()
-    c = AppController(presets, Config(), audio=False, hotkeys=False)
+    c = AppController(presets, Config(), audio=False, hotkeys=False, user_presets_path=tmp_path / "presets.toml")
     yield c
     c.shutdown()
 
@@ -114,3 +114,49 @@ def test_toast_when_virtual_missing(ctrl):
     QApplication.processEvents()
     assert ("error", "Micro virtuel introuvable") in msgs
     ctrl.audio = False
+
+
+def test_editor_save_duplicate_delete_reset(ctrl, tmp_path):
+    import tomllib
+
+    path = tmp_path / "presets.toml"
+    draft = ctrl.newPresetDraft()
+    draft.update(name="Ma voix", categories=["Fun"], effects=[ctrl.defaultEffect("pitch_shift")])
+    pid = ctrl.savePreset(draft)
+    assert pid == "ma-voix" and ctrl.presetModel.get(pid)["isUser"] and ctrl.presetModel.get(pid)["badge"] == "new"
+    assert tomllib.loads(path.read_text(encoding="utf-8"))["preset"][0]["id"] == "ma-voix"
+    dup = ctrl.duplicatePreset(pid)
+    assert dup and ctrl.presetModel.get(dup)["name"] == "Ma voix (copie)"
+    assert ctrl.deletePreset(dup) and ctrl.presetModel.find(dup) is None
+    assert not ctrl.deletePreset("robot")  # preset par défaut : non supprimable
+    robot = ctrl.editDraft("robot")
+    robot["intensity"] = 0.3
+    assert ctrl.savePreset(robot) == "robot"
+    assert ctrl.presetModel.get("robot")["intensity"] == 0.3
+    reset = ctrl.resetPreset("robot")
+    assert reset["intensity"] == 1.0
+    ids = [e["id"] for e in tomllib.loads(path.read_text(encoding="utf-8"))["preset"]]
+    assert ids == ["ma-voix"]  # Robot réinitialisé : plus de surcharge
+
+
+def test_invalid_draft_is_refused(ctrl):
+    msgs = []
+    ctrl.toast.connect(lambda k, t, m: msgs.append(t))
+    draft = ctrl.newPresetDraft()
+    draft["name"] = "   "
+    assert ctrl.savePreset(draft) == ""
+    assert msgs == ["Preset non enregistré"]
+
+
+def test_intensity_is_autosaved(ctrl, tmp_path, qapp):
+    import time
+    import tomllib
+
+    ctrl.setIntensity("robot", 0.6)
+    deadline = time.time() + 3
+    path = tmp_path / "presets.toml"
+    while not path.exists() and time.time() < deadline:
+        qapp.processEvents()
+        time.sleep(0.05)
+    entry = tomllib.loads(path.read_text(encoding="utf-8"))["preset"][0]
+    assert entry["id"] == "robot" and entry["intensity"] == 0.6

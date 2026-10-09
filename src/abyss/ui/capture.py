@@ -54,7 +54,10 @@ def capture_screens(outdir: str | Path) -> list[str]:
     for w, h in SIZES:
         suffix = f"{w}x{h}"
         presets, _ = load_presets()
-        ctrl = AppController(presets, Config(), audio=False, hotkeys=False)
+        import tempfile
+
+        ctrl = AppController(presets, Config(), audio=False, hotkeys=False,
+                             user_presets_path=Path(tempfile.mkdtemp()) / "presets.toml")
         ctrl.level_source = _fake_levels()
         engine = create_engine()
         win = load_main(engine, ctrl)

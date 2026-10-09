@@ -10,3 +10,4 @@
 - Limiteur de fin de chaîne : `pedalboard.Limiter(threshold_db=-1)` + `np.clip` de sécurité. Note : le Limiter JUCE ajoute ~+4,7 dB sous −10 dBFS et compresse au-dessus (son « compressé »), accepté tel quel.
 - Vocodeur : filtres passe-bande Butterworth d'ordre 2 ; enveloppe = redressement + passe-bas Butterworth ordre 2 à 40 Hz (≈ 15 ms) ; normalisation par gain lissé ramenant le RMS du vocodeur à celui de la voix (plafonné à ×200). Dent de scie naïve (aliasing accepté).
 - Le module `vocoder/synth.py` (génération de la voix synthétique) est ajouté pour les tests et le rendu.
+- Presets : format TOML `[[preset]]` avec `effects` en tableau de tables inline ; paramètres des effets pedalboard = noms des arguments pedalboard ; un `presets.toml` illisible retombe sur le seul preset « Normal ». « Démon » : réverb room_size 0.3, wet 0.15.

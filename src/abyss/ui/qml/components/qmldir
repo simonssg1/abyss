@@ -1,8 +1,10 @@
 module components
 AbyssButton 1.0 AbyssButton.qml
+AbyssComboBox 1.0 AbyssComboBox.qml
 AbyssRangeSlider 1.0 AbyssRangeSlider.qml
 AbyssSlider 1.0 AbyssSlider.qml
 AbyssText 1.0 AbyssText.qml
+AbyssTextField 1.0 AbyssTextField.qml
 AbyssToggle 1.0 AbyssToggle.qml
 Badge 1.0 Badge.qml
 Chip 1.0 Chip.qml

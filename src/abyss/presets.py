@@ -159,6 +159,31 @@ def _extended_fields(name: str, p: dict, warnings: list[str]) -> dict:
     return out
 
 
+def preset_to_dict(p: Preset) -> dict:
+    """Preset → table TOML (format étendu, seuls les champs utiles)."""
+    d: dict = {"name": p.name}
+    if p.hotkey_index is not None:
+        d["hotkey_index"] = p.hotkey_index
+    for key in ("description", "icon", "badge"):
+        if getattr(p, key):
+            d[key] = getattr(p, key)
+    d["categories"] = list(p.categories)
+    if p.intensity != 1.0:
+        d["intensity"] = round(p.intensity, 3)
+    if p.tone_low_hz != TONE_MIN_HZ:
+        d["tone_low_hz"] = round(p.tone_low_hz, 1)
+    if p.tone_high_hz != TONE_MAX_HZ:
+        d["tone_high_hz"] = round(p.tone_high_hz, 1)
+    d["effects"] = [dict(e) for e in p.effects]
+    return d
+
+
+def preset_from_dict(data: dict, sample_rate: int = 48000) -> tuple[Preset | None, list[str]]:
+    """Valide une table de preset (même règles que le fichier). None si le preset est invalide."""
+    presets, warnings = parse_presets({"preset": [data]}, sample_rate)
+    return (presets[0] if presets else None), warnings
+
+
 def load_presets(path: str | Path | None = None, sample_rate: int = 48000) -> tuple[list[Preset], list[str]]:
     path = Path(path) if path else DEFAULT_PRESETS
     try:

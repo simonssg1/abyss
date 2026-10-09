@@ -31,3 +31,13 @@ def test_icon_provider_recolors():
     img = IconProvider().requestImage("check/06D6A0", QSize(), QSize(48, 48))
     colors = {img.pixelColor(x, y).name() for x in range(48) for y in range(48) if img.pixelColor(x, y).alpha() == 255}
     assert colors == {"#06d6a0"}
+
+
+def test_all_screens_load_without_qml_warnings(tmp_path):
+    proc = subprocess.run([sys.executable, "-m", "abyss.ui.capture", "--screens", str(tmp_path)],
+                          env=ENV, capture_output=True, text=True, timeout=180)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    names = {p.name for p in tmp_path.glob("*.png")}
+    for screen in ("accueil", "direct-repos", "direct-actif", "voix", "editeur", "reglages", "galerie"):
+        for size in ("420x780", "1200x780"):
+            assert f"{screen}-{size}.png" in names

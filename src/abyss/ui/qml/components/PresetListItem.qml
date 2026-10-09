@@ -12,6 +12,8 @@ AbstractButton {
     property string badge: ""      // "", "new", "beta", "active", "soon"
     property string hotkey: ""
     property bool active: false
+    property bool separateChevron: false   // true : le chevron émet chevronClicked (édition)
+    signal chevronClicked()
 
     implicitHeight: 72
     implicitWidth: 340
@@ -34,7 +36,7 @@ AbstractButton {
         ColumnLayout {
             spacing: 2
             Layout.fillWidth: true
-            AbyssText { text: control.name; role: "body"; font.weight: Theme.weightMedium; Layout.fillWidth: true }
+            AbyssText { text: control.name; role: "body"; font.weight: Theme.weightMedium; Layout.fillWidth: true; color: control.active ? Theme.accent : Theme.textPrimary }
             AbyssText { text: control.description; role: "caption"; secondary: true; Layout.fillWidth: true; visible: text !== "" }
         }
         Badge { visible: control.badge !== ""; variant: control.badge || "new" }
@@ -48,6 +50,25 @@ AbstractButton {
             border.color: Theme.borderNeutral
             AbyssText { id: hk; anchors.centerIn: parent; text: control.hotkey; role: "caption"; secondary: true }
         }
-        Icon { name: "chevron-right"; color: Theme.textSecondary; size: 18; visible: control.enabled }
+        Item {
+            visible: control.enabled
+            implicitWidth: control.separateChevron ? 36 : 18
+            implicitHeight: 36
+            Rectangle {
+                anchors.fill: parent
+                radius: Theme.radiusButton
+                color: chevronArea.containsMouse ? Theme.cardHover : "transparent"
+                visible: control.separateChevron
+            }
+            Icon { anchors.centerIn: parent; name: "chevron-right"; color: chevronArea.containsMouse ? Theme.accent : Theme.textSecondary; size: 18 }
+            MouseArea {
+                id: chevronArea
+                anchors.fill: parent
+                enabled: control.separateChevron
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: control.chevronClicked()
+            }
+        }
     }
 }

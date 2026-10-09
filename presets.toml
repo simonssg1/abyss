@@ -1,14 +1,22 @@
 # Presets de voix. Chaque [[preset]] : name, hotkey_index (1–9 → Ctrl+Alt+N), effects (ordonnés).
+# Champs optionnels : description, icon (nom Lucide), categories (Robot, Sci-Fi, Gaming, Fun, Ambiance, IA),
+# badge ("new" | "beta"), intensity (0–1, défaut 1), tone_low_hz / tone_high_hz (50–12000).
 # Types d'effets : pitch_shift, reverb, distortion, chorus, delay, bitcrush, highpass, lowpass,
 # compressor, noise_gate, gain (paramètres = ceux de pedalboard), ring_mod, vocoder, rvc (v2).
 
 [[preset]]
 name = "Normal"
+description = "Ta voix, juste débruitée"
+icon = "mic"
+categories = []
 hotkey_index = 1
 effects = []
 
 [[preset]]
 name = "Robot"
+description = "Métallique et saccadée"
+icon = "bot"
+categories = ["Robot"]
 hotkey_index = 2
 effects = [
   { type = "ring_mod", frequency_hz = 60.0, mix = 1.0 },
@@ -17,6 +25,9 @@ effects = [
 
 [[preset]]
 name = "Vocodeur"
+description = "Synthé à trois notes"
+icon = "audio-waveform"
+categories = ["Robot", "Sci-Fi"]
 hotkey_index = 3
 effects = [
   { type = "vocoder", bands = 20, carrier_hz = 110.0, chord = true, mix = 1.0 },
@@ -24,6 +35,9 @@ effects = [
 
 [[preset]]
 name = "Démon"
+description = "Grave, saturée, inquiétante"
+icon = "flame"
+categories = ["Gaming"]
 hotkey_index = 4
 effects = [
   { type = "pitch_shift", semitones = -6 },
@@ -34,6 +48,9 @@ effects = [
 
 [[preset]]
 name = "Hélium"
+description = "Aiguë comme un ballon"
+icon = "wind"
+categories = ["Fun"]
 hotkey_index = 5
 effects = [
   { type = "pitch_shift", semitones = 7 },
@@ -41,6 +58,9 @@ effects = [
 
 [[preset]]
 name = "Talkie-walkie"
+description = "Radio qui grésille"
+icon = "radio"
+categories = ["Gaming"]
 hotkey_index = 6
 effects = [
   { type = "highpass", cutoff_frequency_hz = 400 },
@@ -51,6 +71,9 @@ effects = [
 
 [[preset]]
 name = "Cathédrale"
+description = "Immense réverbération"
+icon = "church"
+categories = ["Ambiance"]
 hotkey_index = 7
 effects = [
   { type = "reverb", room_size = 0.9, wet_level = 0.4 },
@@ -58,6 +81,9 @@ effects = [
 
 [[preset]]
 name = "Alien"
+description = "Venue d'une autre planète"
+icon = "orbit"
+categories = ["Sci-Fi"]
 hotkey_index = 8
 effects = [
   { type = "pitch_shift", semitones = 4 },

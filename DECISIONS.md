@@ -43,3 +43,14 @@
 - Autorisation micro (checklist) lue via le runtime Objective-C avec `ctypes` (AVCaptureDevice), sans dépendance ; « unknown » hors macOS.
 - Entrée « Voix IA » : ligne synthétique du modèle (non cliquable, badge Bientôt, catégorie IA), absente des presets réels.
 - Version de l'app passée à 2.0.0 (`abyss.__version__`). Config : champs `show_welcome` et `window` ajoutés (rétrocompatibles).
+- D3 (choix utilisateur) : mode large (> 760 px) = Direct toujours visible à gauche + panneau à droite (Voix par défaut ; Éditeur et Réglages s'y empilent).
+- Textes des presets par défaut (choix utilisateur) : descriptions, icônes Lucide et catégories proposées (Normal sans catégorie).
+- Démarrage du direct (choix utilisateur) : uniquement par clic sur l'anneau (rien ne sort sans action) ; avant, l'ancienne app démarrait l'audio à l'ouverture.
+- Raccourcis affichés « Ctrl+Alt+2 » sur Mac comme sur Windows (choix utilisateur).
+- Liste des voix (choix utilisateur) : clic sur la ligne = utiliser la voix (et retour au Direct en mode vertical), chevron = ouvrir l'éditeur.
+- Preset actif dans la liste : contour et nom en accent (pas de badge, pour ne pas tronquer la description) ; le badge « Actif » reste sur l'écran Direct quand le direct tourne.
+- Écran Direct : légendes sous les deux boutons ronds (« Couper » / « Bypass », « Sortie coupée » / « Effets en pause ») ; sortie coupée = bouton rouge (variante `danger` d'IconButton) ; texte d'aide « Touche l'anneau pour démarrer » au repos.
+- Passage vertical ↔ large : la pile de navigation repart de l'écran par défaut (Direct ou Voix) au changement de mode.
+- Éditeur : les valeurs sont modifiées en place dans le brouillon (les curseurs ne sont pas recréés pendant un glissement) ; aperçu en direct avec 120 ms d'anti-rebond ; quitter sans enregistrer rétablit le preset enregistré. Suppression en deux clics (« Confirmer »). La catégorie IA n'est pas proposée dans l'éditeur (réservée aux voix IA).
+- Schéma des paramètres d'effets : `processors/schema.py` (libellés, min, max, pas, unité). Un nouveau preset n'a pas de raccourci.
+- `abyss` lance la nouvelle interface ; l'ancienne reste disponible via `abyss --classic` en attendant D7. Contenu des écrans limité à 640 px de large dans le panneau.

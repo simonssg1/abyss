@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 import math
 import threading
@@ -16,7 +17,8 @@ from abyss.audio.engine import AudioEngine
 from abyss.config import Config, save_config
 from abyss.hotkeys import PERMISSION_HINT, HotkeyBridge
 from abyss.platform.permissions import microphone_status
-from abyss.presets import Preset, apply_live
+from abyss.presets import TONE_MAX_HZ, TONE_MIN_HZ, Preset, apply_live, preset_from_dict, slugify
+from abyss.processors.schema import EFFECT_SCHEMAS, complete_effect, default_effect
 from abyss.ui.models import PresetFilterModel, PresetModel
 
 log = logging.getLogger("abyss.ui")
@@ -53,12 +55,14 @@ class AppController(QObject):
     devicesChanged = Signal()
     permissionChanged = Signal()
     previewChanged = Signal()
+    presetsChanged = Signal()
 
     def __init__(self, presets: list[Preset], cfg: Config, audio: bool = True, hotkeys: bool = True,
                  parent: QObject | None = None):
         super().__init__(parent)
         self.cfg = cfg
         self.audio = audio
+        self._defaults = {p.id: copy.deepcopy(p) for p in presets if not p.is_user}
         self.presetModel = PresetModel(presets, cfg.hotkeys, self)
         self.presetFilter = PresetFilterModel(self.presetModel, self)
 
@@ -87,6 +91,9 @@ class AppController(QObject):
         self._hotkeys_status = "inactifs"
         self._mic_permission = microphone_status()
         self._preview_playing = False
+        self._preview_id = ""
+        self.level_source = None  # callable () -> (entrée, sortie), pour la démo et les captures
+        self._revision = 0
         self._input_devices: list[str] = []
         self._output_devices: list[str] = []
         self._virtual_found = False
@@ -192,6 +199,41 @@ class AppController(QObject):
     def speakerWarning(self) -> bool:
         return dv.is_speaker_like(self.cfg.monitor_device)
 
+    @Property(int, notify=presetsChanged)
+    def presetsRevision(self) -> int:
+        return self._revision
+
+    @Property(list, constant=True)
+    def windowGeometry(self) -> list:
+        return list(self.cfg.window) if self.cfg.window else []
+
+    @Slot(int, int, int, int)
+    def saveWindowGeometry(self, x: int, y: int, w: int, h: int) -> None:
+        self.cfg.window = [int(x), int(y), int(w), int(h)]
+
+    @Property(list, notify=presetsChanged)
+    def hotkeyList(self) -> list:
+        from abyss.hotkeys import pretty
+
+        rows = []
+        for p in self.presetModel.presets():
+            combo = self.cfg.hotkeys.get(f"preset_{p.hotkey_index}") if p.hotkey_index else None
+            if combo:
+                rows.append({"label": p.name, "combo": pretty(combo)})
+        for key, label in (("bypass", "Bypass"), ("monitor", "Retour casque")):
+            if self.cfg.hotkeys.get(key):
+                rows.append({"label": label, "combo": pretty(self.cfg.hotkeys[key])})
+        return rows
+
+    @Property(str, notify=previewChanged)
+    def previewId(self) -> str:
+        return self._preview_id
+
+    @Slot("QVariantMap")
+    def togglePreview(self, draft: dict) -> None:
+        """Aperçu audio (phase 5)."""
+        self.toast.emit("error", "Aperçu indisponible", "L'aperçu audio arrive bientôt.")
+
     @Property(str, constant=True)
     def version(self) -> str:
         return __version__
@@ -254,6 +296,7 @@ class AppController(QObject):
             return
         if self.audio:
             self.engine.stop()
+        self._history.extend([0.0] * HISTORY)
         self._set_live(False)
 
     def _set_live(self, on: bool) -> None:
@@ -306,6 +349,7 @@ class AppController(QObject):
         p.intensity = min(1.0, max(0.0, float(value)))
         self.apply_preset_live(p)
         self.presetModel.refresh(p.id)
+        self._intensity_dirty = True
 
     def apply_preset_live(self, p: Preset, rebuild: bool = False) -> None:
         """Répercute les réglages d'un preset sur le direct s'il est actif."""
@@ -313,6 +357,166 @@ class AppController(QObject):
             return
         if rebuild or not apply_live(self.engine.pipeline.switcher.current, p):
             self.engine.set_preset(p)
+
+    # ----- éditeur de presets -----
+
+    @Property("QVariantMap", constant=True)
+    def effectSchemas(self) -> dict:
+        return EFFECT_SCHEMAS
+
+    @Property(list, constant=True)
+    def effectTypes(self) -> list:
+        return list(EFFECT_SCHEMAS)
+
+    @Slot(str, result="QVariantMap")
+    def defaultEffect(self, kind: str) -> dict:
+        return default_effect(kind) if kind in EFFECT_SCHEMAS else {}
+
+    @Slot(str, result="QVariantMap")
+    def editDraft(self, preset_id: str) -> dict:
+        """Copie modifiable d'un preset (effets complétés avec les valeurs par défaut de leur schéma)."""
+        d = self.presetModel.get(preset_id)
+        if d:
+            d["effects"] = [complete_effect(e) for e in d["effects"]]
+            d["isDefault"] = preset_id in self._defaults
+        return d
+
+    @Slot(result="QVariantMap")
+    def newPresetDraft(self) -> dict:
+        return {"id": "", "name": "Nouveau preset", "description": "", "categories": [], "icon": "sparkles",
+                "badge": "new", "hotkey": "", "intensity": 1.0, "toneLow": TONE_MIN_HZ, "toneHigh": TONE_MAX_HZ,
+                "effects": [], "isUser": True, "enabled": True, "isDefault": False}
+
+    def _preset_from_draft(self, draft: dict) -> tuple[Preset | None, list[str]]:
+        existing = self.presetModel.find(draft.get("id") or "")
+        data = {
+            "name": str(draft.get("name", "")).strip(),
+            "description": str(draft.get("description", "")),
+            "icon": str(draft.get("icon", "")),
+            "badge": draft.get("badge", "") if draft.get("badge", "") in ("", "new", "beta") else "",
+            "categories": [str(c) for c in draft.get("categories", [])],
+            "intensity": float(draft.get("intensity", 1.0)),
+            "tone_low_hz": float(draft.get("toneLow", TONE_MIN_HZ)),
+            "tone_high_hz": float(draft.get("toneHigh", TONE_MAX_HZ)),
+            "effects": [self._clean_effect(e) for e in draft.get("effects", [])],
+        }
+        if existing is not None and existing.hotkey_index is not None:
+            data["hotkey_index"] = existing.hotkey_index
+        preset, warnings = preset_from_dict(data)
+        if preset is not None:
+            preset.is_user = existing.is_user if existing else True
+            preset.id = existing.id if existing else self._unique_id(preset.name)
+        return preset, warnings
+
+    @staticmethod
+    def _clean_effect(e: dict) -> dict:
+        out = {"type": e.get("type")}
+        for prm in EFFECT_SCHEMAS.get(e.get("type"), {}).get("params", []):
+            if prm["key"] in e:
+                v = e[prm["key"]]
+                out[prm["key"]] = bool(v) if prm["kind"] == "bool" else int(round(v)) if prm["kind"] == "int" else float(v)
+        return out
+
+    def _unique_id(self, name: str) -> str:
+        base = slugify(name)
+        pid, n = base, 2
+        while self.presetModel.find(pid) is not None or pid == "ai-voice":
+            pid, n = f"{base}-{n}", n + 1
+        return pid
+
+    @Slot("QVariantMap")
+    def previewEdit(self, draft: dict) -> None:
+        """Modifications en cours appliquées au direct si ce preset est actif."""
+        if draft.get("id") != self._active_id:
+            return
+        preset, _ = self._preset_from_draft(draft)
+        if preset is not None:
+            current = self.presetModel.find(preset.id)
+            rebuild = current is None or current.effects != preset.effects
+            self._live_preset = preset
+            self.apply_preset_live(preset, rebuild=rebuild or getattr(self, "_live_dirty", False))
+            self._live_dirty = rebuild
+
+    @Slot(str)
+    def cancelEdit(self, preset_id: str) -> None:
+        """Abandon de l'édition : le direct revient au preset enregistré."""
+        p = self.presetModel.find(preset_id)
+        if p is not None and getattr(self, "_live_preset", None) is not None:
+            self.apply_preset_live(p, rebuild=True)
+        self._live_preset = None
+        self._live_dirty = False
+
+    @Slot("QVariantMap", result=str)
+    def savePreset(self, draft: dict) -> str:
+        preset, warnings = self._preset_from_draft(draft)
+        if preset is None:
+            self.toast.emit("error", "Preset non enregistré", warnings[0] if warnings else "Preset invalide.")
+            return ""
+        presets = self.presetModel.presets()
+        idx = next((i for i, p in enumerate(presets) if p.id == preset.id), None)
+        if idx is None:
+            presets.append(preset)
+        else:
+            presets[idx] = preset
+        if not self._commit_presets(presets):
+            return ""
+        self._live_preset = None
+        self._live_dirty = False
+        self.apply_preset_live(preset, rebuild=True)
+        self.toast.emit("success", "Preset enregistré", f"« {preset.name} » est à jour.")
+        return preset.id
+
+    @Slot(str, result=str)
+    def duplicatePreset(self, preset_id: str) -> str:
+        src = self.presetModel.find(preset_id)
+        if src is None:
+            return ""
+        dup = copy.deepcopy(src)
+        dup.name = f"{src.name} (copie)"
+        dup.id = self._unique_id(dup.name)
+        dup.is_user, dup.badge, dup.hotkey_index = True, "new", None
+        if not self._commit_presets(self.presetModel.presets() + [dup]):
+            return ""
+        self.toast.emit("success", "Preset dupliqué", f"« {dup.name} » a été créé.")
+        return dup.id
+
+    @Slot(str, result=bool)
+    def deletePreset(self, preset_id: str) -> bool:
+        p = self.presetModel.find(preset_id)
+        if p is None or not p.is_user:
+            return False
+        if not self._commit_presets([q for q in self.presetModel.presets() if q.id != preset_id]):
+            return False
+        if self._active_id == preset_id:
+            first = self.presetModel.presets()[0]
+            self.selectPreset(first.id)
+        self.toast.emit("success", "Preset supprimé", f"« {p.name} » a été supprimé.")
+        return True
+
+    @Slot(str, result="QVariantMap")
+    def resetPreset(self, preset_id: str) -> dict:
+        default = self._defaults.get(preset_id)
+        if default is None:
+            return {}
+        presets = [copy.deepcopy(default) if p.id == preset_id else p for p in self.presetModel.presets()]
+        if not self._commit_presets(presets):
+            return {}
+        self.apply_preset_live(default, rebuild=True)
+        self.toast.emit("success", "Preset réinitialisé", f"« {default.name} » a retrouvé ses réglages d'origine.")
+        return self.editDraft(preset_id)
+
+    def _commit_presets(self, presets: list[Preset]) -> bool:
+        """Met à jour le modèle (et, en phase 5, le fichier de presets)."""
+        if not self._persist(presets):
+            return False
+        self.presetModel.set_presets(presets)
+        self.engine.presets = presets
+        self._revision += 1
+        self.presetsChanged.emit()
+        return True
+
+    def _persist(self, presets: list[Preset]) -> bool:
+        return True
 
     # ----- contrôles -----
     @Slot(bool)
@@ -444,7 +648,9 @@ class AppController(QObject):
         live = self._live and self.audio
         in_lvl = level_from_rms(m.rms_in) if live else 0.0
         out_lvl = level_from_rms(m.rms_out) if live else 0.0
-        if self._live or any(self._history):
+        if self._live and self.level_source is not None:  # démo / captures : niveaux simulés
+            in_lvl, out_lvl = self.level_source()
+        if self._live:
             self._history.append(in_lvl)
         if (in_lvl, out_lvl) != (self._in_level, self._out_level) or self._live:
             self._in_level, self._out_level = in_lvl, out_lvl

@@ -19,3 +19,4 @@
 - Raccourcis macOS : si pynput signale « process not trusted » (`IS_TRUSTED` faux), le listener est arrêté et l'interface affiche le message d'autorisation ; l'app continue sans raccourcis. Des raccourcis `preset_9` existent dans la config (pour un 9e preset éventuel).
 - GUI : le stream casque reste ouvert dès qu'un casque est choisi ; la case « Retour casque » ne fait qu'activer l'écriture (pas de redémarrage des streams). Option `--no-audio` (et `--quit-after S`, cachée) pour le smoke test.
 - La fenêtre dépasse un peu 640 px de haut quand des avertissements sont affichés (contenu prioritaire sur la taille).
+- Vérification matérielle impossible depuis cette session : l'ouverture du micro (`check_input_settings`) reste bloquée sur l'autorisation micro de macOS pour ce processus. Les streams réels sont donc non testés ; le thread de traitement et les callbacks sont testés en simulation.

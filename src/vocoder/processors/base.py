@@ -86,6 +86,20 @@ class PedalboardStage:
         self.board.reset()
 
 
+KNEE = 0.85
+CEILING = 0.98
+
+
+def soft_ceiling(x: np.ndarray) -> np.ndarray:
+    """Filet de sécurité après le limiteur : au-delà de 0,85, compression douce vers 0,98 (jamais 1)."""
+    a = np.abs(x)
+    over = a > KNEE
+    if over.any():
+        span = CEILING - KNEE
+        x = np.where(over, np.sign(x) * (KNEE + span * np.tanh((a - KNEE) / span)), x)
+    return x.astype(np.float32, copy=False)
+
+
 class Chain:
     """Liste ordonnée de processors + gain de sortie + limiteur (sortie toujours dans [-1, 1])."""
 
@@ -142,8 +156,7 @@ class Chain:
         x = x * self._gain
         x = self._limiter.process(x[np.newaxis, :].astype(np.float32, copy=False),
                                   self.sample_rate, reset=False)[0]
-        np.clip(x, -1.0, 1.0, out=x)
-        return x.astype(np.float32, copy=False)
+        return soft_ceiling(x)
 
     def reset(self) -> None:
         for p in self.processors:

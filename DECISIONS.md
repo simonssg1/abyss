@@ -11,3 +11,8 @@
 - Vocodeur : filtres passe-bande Butterworth d'ordre 2 ; enveloppe = redressement + passe-bas Butterworth ordre 2 à 40 Hz (≈ 15 ms) ; normalisation par gain lissé ramenant le RMS du vocodeur à celui de la voix (plafonné à ×200). Dent de scie naïve (aliasing accepté).
 - Le module `vocoder/synth.py` (génération de la voix synthétique) est ajouté pour les tests et le rendu.
 - Presets : format TOML `[[preset]]` avec `effects` en tableau de tables inline ; paramètres des effets pedalboard = noms des arguments pedalboard ; un `presets.toml` illisible retombe sur le seul preset « Normal ». « Démon » : réverb room_size 0.3, wet 0.15.
+- Fin de chaîne : après le Limiter JUCE (qui laisse passer quelques transitoires à 1,0 sur « Démon »), un plafond doux tanh (genou 0,85 → plafond 0,98) remplace le simple `clip` : jamais d'échantillon ≥ 0,98, donc aucun écrêtage.
+- Windows/WASAPI : streams ouverts avec `sd.WasapiSettings(auto_convert=True)` (mode partagé, Windows convertit la fréquence si besoin) ; 48 kHz testé via `check_*_settings`, sinon 44,1 kHz pour tous.
+- Ring buffers : entrée 16 blocs, sorties 4 blocs (débordement → on jette le plus ancien), sorties amorcées avec 2 blocs de silence (niveau cible). Le retour casque est un stream 2 canaux (mono dupliqué) pour sortir des deux côtés.
+- Le rendu (`--render`) passe par le même `Pipeline` que le temps réel, débruitage inclus ; WAV de sortie en float32.
+- `config.py` écrit dès la phase 4 (le mode `--headless` lit les périphériques et réglages enregistrés, sinon auto-détection).

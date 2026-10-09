@@ -129,9 +129,11 @@ def run_app(presets, cfg, audio: bool = True, quit_after: float | None = None,
     from PySide6.QtCore import QTimer
 
     from abyss.platform.macos import set_process_name
+    from abyss.platform.windows import set_app_user_model_id
     from abyss.ui.controller import AppController
 
     set_process_name("Abyss")
+    set_app_user_model_id()
     app = create_app()
     if single_instance and notify_running_instance():
         log.info("Abyss tourne déjà : fenêtre existante ramenée au premier plan")

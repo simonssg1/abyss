@@ -68,3 +68,12 @@
 - D7 (choix utilisateur) : ancienne interface Widgets supprimée (`src/abyss/gui/`, option `--classic`, test associé) ; `abyss` = interface Qt Quick uniquement.
 - Captures (`docs/screenshots/`, 420×780 et 1200×780) générées avec des périphériques fictifs : le dépôt est public, les vrais noms (ex. AirPods) n'y apparaissent pas.
 - Moteur temps réel : seuls les imports, le nom du logger et le nom du thread ont changé (renommage).
+
+## Lancement sur Windows (2026-10-09)
+
+- Raccourcis « Abyss » sur le Bureau et dans le menu Démarrer (choix utilisateur), créés par `scripts/install_windows.ps1` (WScript.Shell), lancé par double-clic via `scripts/install_windows.cmd` (contourne la politique d'exécution PowerShell). Script en UTF-8 avec BOM et CRLF (`.gitattributes`) pour PowerShell 5.1.
+- Pas de console (choix utilisateur) : nouvelle commande `abyss-gui` (`[project.gui-scripts]`, `main_gui`) dont les logs vont dans `~/.abyss/logs/abyss.log` (rotation 1 Mo × 3) ; le raccourci lance `uvw.exe run --project <dépôt> abyss-gui` (uv sans console, environnement tenu à jour) ; repli sur `.venv\Scripts\abyss-gui.exe` si `uvw.exe` est absent.
+- uv absent : l'installeur l'installe via `winget install --id astral-sh.uv` (choix utilisateur).
+- Icône Windows `abyss.ico` (6 tailles, entrées PNG) écrite par `scripts/build_icons.py` ; barre des tâches : `SetCurrentProcessExplicitAppUserModelID("simonssg1.Abyss")` pour ne pas être regroupé sous Python.
+- Autorisation micro Windows lue dans le registre (CapabilityAccessManager, accès global et « applications de bureau ») pour la checklist ; messages d'aide spécifiques à Windows (micro : Paramètres → Confidentialité ; raccourcis : pas d'autorisation, piste antivirus).
+- Non testé sur un vrai PC (pas de Windows ni de PowerShell sur le Mac de dev).

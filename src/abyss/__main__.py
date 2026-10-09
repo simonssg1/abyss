@@ -101,7 +101,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-audio", action="store_true", help="GUI sans streams audio (tests)")
     parser.add_argument("--quit-after", type=float, metavar="S", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
     if args.list_devices:
         from abyss.audio.devices import format_device_list
@@ -156,6 +157,29 @@ def main(argv: list[str] | None = None) -> int:
 
     return run_app(presets, cfg, audio=not args.no_audio, quit_after=args.quit_after,
                    initial_preset=args.preset, defaults=defaults)
+
+
+def main_gui() -> int:
+    """Point d'entrée sans console (`abyss-gui`) : les logs vont dans ~/.abyss/logs/abyss.log."""
+    from logging.handlers import RotatingFileHandler
+
+    log_dir = Path.home() / ".abyss" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / "abyss.log"
+    # Sans console (pythonw), stdout/stderr valent None : on les redirige vers le fichier de log.
+    if sys.stdout is None or sys.stderr is None:
+        stream = open(log_file, "a", encoding="utf-8", buffering=1)  # noqa: SIM115
+        sys.stdout = sys.stdout or stream
+        sys.stderr = sys.stderr or stream
+    handler = RotatingFileHandler(log_file, maxBytes=1_000_000, backupCount=3, encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    logging.basicConfig(level=logging.INFO, handlers=[handler])
+    log.info("=== lancement d'Abyss (sans console)")
+    try:
+        return main(sys.argv[1:])
+    except Exception:
+        log.exception("Abyss s'est arrêté sur une erreur")
+        return 1
 
 
 if __name__ == "__main__":

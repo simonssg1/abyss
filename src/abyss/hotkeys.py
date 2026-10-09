@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 
 from PySide6.QtCore import QObject, Signal
 
 log = logging.getLogger("abyss.hotkeys")
-
-import os
 
 BUNDLE_ID = "com.simonssg1.abyss"
 
@@ -19,8 +18,11 @@ def permission_target() -> str:
     return "Abyss" if os.environ.get("__CFBundleIdentifier") == BUNDLE_ID else "ton terminal"
 
 
-PERMISSION_HINT = (f"Autorise {permission_target()} dans Réglages Système → Confidentialité et sécurité → "
-                   "Accessibilité et Surveillance de l'entrée")
+if sys.platform == "darwin":
+    PERMISSION_HINT = (f"Autorise {permission_target()} dans Réglages Système → Confidentialité et sécurité → "
+                       "Surveillance de l'entrée")
+else:
+    PERMISSION_HINT = "Relance Abyss ; si ça persiste, un antivirus ou un autre logiciel bloque peut-être le clavier"
 
 
 def pretty(combo: str) -> str:

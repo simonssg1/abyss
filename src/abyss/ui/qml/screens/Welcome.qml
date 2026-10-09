@@ -98,13 +98,15 @@ Item {
                          : app.micPermission === "denied" ? "fail" : "pending"
                     label: "Accès au micro"
                     help: app.micPermission === "denied"
-                          ? "Autorise " + app.permissionTarget + " dans Réglages Système → Confidentialité et sécurité → Micro."
+                          ? "Autorise le micro : " + app.micSettingsPath + "."
                           : "L'accès sera demandé au premier démarrage du direct."
                 }
                 CheckRow {
                     status: app.hotkeysOk ? "ok" : "fail"
                     label: "Raccourcis clavier actifs"
-                    help: "Autorise " + app.permissionTarget + " dans Accessibilité et Surveillance de l'entrée (Réglages Système)."
+                    help: app.platform === "mac"
+                          ? "Autorise " + app.permissionTarget + " dans Surveillance de l'entrée (Réglages Système)."
+                          : "Relance Abyss ; si ça persiste, un antivirus bloque peut-être l'écoute du clavier."
                 }
             }
         }

@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import logging
 import math
+import sys
 import threading
 import time
 from collections import deque
@@ -311,6 +312,17 @@ class AppController(QObject):
             self.previewChanged.emit()
 
     @Property(str, constant=True)
+    def platform(self) -> str:
+        return {"darwin": "mac", "win32": "windows"}.get(sys.platform, "linux")
+
+    @Property(str, constant=True)
+    def micSettingsPath(self) -> str:
+        """Où autoriser le micro, selon le système."""
+        if sys.platform == "win32":
+            return "Paramètres Windows → Confidentialité et sécurité → Microphone (applications de bureau)"
+        return f"Réglages Système → Confidentialité et sécurité → Micro ({self.permissionTarget})"
+
+    @Property(str, constant=True)
     def permissionTarget(self) -> str:
         from abyss.hotkeys import permission_target
 
@@ -369,8 +381,7 @@ class AppController(QObject):
             return
         err = self.engine.metrics.error or "Erreur inconnue"
         if self._mic_permission == "denied":
-            self.toast.emit("error", "Accès au micro refusé",
-                            f"Autorise {self.permissionTarget} dans Réglages Système → Confidentialité et sécurité → Micro.")
+            self.toast.emit("error", "Accès au micro refusé", f"Autorise le micro : {self.micSettingsPath}.")
         else:
             self.toast.emit("error", "Impossible de démarrer le direct", err)
 
@@ -777,8 +788,7 @@ class AppController(QObject):
         if now - self._silent_since > 3.0:
             self._silence_warned = True
             self._update_permission()
-            self.toast.emit("error", "Aucun son du micro",
-                            "Vérifie l'accès au micro : Réglages Système → Confidentialité et sécurité → Micro.")
+            self.toast.emit("error", "Aucun son du micro", f"Vérifie l'accès au micro : {self.micSettingsPath}.")
 
     # ----- fermeture -----
     @Slot()

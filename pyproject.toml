@@ -16,6 +16,9 @@ dependencies = [
 [project.scripts]
 abyss = "abyss.__main__:main"
 
+[project.gui-scripts]
+abyss-gui = "abyss.__main__:main_gui"  # sans console (raccourci Windows)
+
 [dependency-groups]
 dev = ["pytest>=8"]
 

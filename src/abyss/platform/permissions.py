@@ -10,8 +10,29 @@ import sys
 NOT_DETERMINED, RESTRICTED, DENIED, AUTHORIZED = 0, 1, 2, 3
 
 
+def _windows_microphone_status() -> str:
+    """Paramètres → Confidentialité → Microphone (accès global + « applications de bureau »)."""
+    try:
+        import winreg
+
+        base = r"Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone"
+        for root, sub in ((winreg.HKEY_LOCAL_MACHINE, base), (winreg.HKEY_CURRENT_USER, base),
+                          (winreg.HKEY_CURRENT_USER, base + r"\NonPackaged")):
+            try:
+                with winreg.OpenKey(root, sub) as key:
+                    if str(winreg.QueryValueEx(key, "Value")[0]).lower() == "deny":
+                        return "denied"
+            except OSError:
+                continue
+        return "authorized"
+    except Exception:
+        return "unknown"
+
+
 def microphone_status() -> str:
-    """'authorized' | 'denied' | 'not_determined' | 'unknown' (hors macOS ou en cas d'échec)."""
+    """'authorized' | 'denied' | 'not_determined' | 'unknown' (plateforme non gérée ou échec)."""
+    if sys.platform == "win32":
+        return _windows_microphone_status()
     if sys.platform != "darwin":
         return "unknown"
     try:

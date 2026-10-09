@@ -134,7 +134,9 @@ Item {
                 }
                 Warning {
                     visible: !app.hotkeysOk
-                    text: "Autorise " + app.permissionTarget + " dans Réglages Système → Confidentialité et sécurité → Accessibilité et Surveillance de l'entrée."
+                    text: app.platform === "mac"
+                          ? "Autorise " + app.permissionTarget + " dans Réglages Système → Confidentialité et sécurité → Surveillance de l'entrée."
+                          : "Relance Abyss ; si ça persiste, un antivirus bloque peut-être l'écoute du clavier."
                 }
                 Repeater {
                     model: app.hotkeyList

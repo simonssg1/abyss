@@ -23,14 +23,18 @@ git clone https://github.com/simonssg1/abyss.git && cd abyss
 uv sync
 ```
 
-**Windows** : installe [VB-CABLE](https://vb-audio.com/Cable/) (redémarrage) et [uv](https://docs.astral.sh/uv/), puis :
+**Windows**
 
-```sh
-gh repo clone simonssg1/abyss
-cd abyss
-uv sync
-uv run abyss
-```
+1. Installe [VB-CABLE](https://vb-audio.com/Cable/) (pilote du micro virtuel), puis redémarre.
+2. Récupère le dépôt (`git clone https://github.com/simonssg1/abyss.git`, ou « Code → Download ZIP » sur GitHub).
+3. Double-clique sur **`scripts\install_windows.cmd`**. Il installe uv via winget si besoin, prépare
+   l'environnement (Python 3.11 compris), génère l'icône et crée le raccourci **« Abyss »** sur le Bureau
+   et dans le menu Démarrer. Relançable sans risque.
+4. Lance Abyss depuis le raccourci : aucune fenêtre de console, logs dans `%USERPROFILE%\.abyss\logs\abyss.log`.
+
+Dans Abyss, choisis le micro, **CABLE Input** comme micro virtuel et ton casque. Dans Discord, l'entrée est
+**CABLE Output**. Si le micro ne capte rien : Paramètres Windows → Confidentialité et sécurité → Microphone →
+autoriser les applications de bureau. Pas d'autorisation à donner pour les raccourcis sur Windows.
 
 ## Lancer Abyss
 

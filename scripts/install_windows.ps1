@@ -1,5 +1,6 @@
 ﻿# Installe Abyss sur Windows : uv (via winget si absent), dépendances, icône,
-# raccourcis « Abyss » sur le Bureau et dans le menu Démarrer.
+# raccourcis « Abyss » sur le Bureau et dans le menu Démarrer, puis le micro virtuel :
+# VB-CABLE téléchargé depuis le site officiel si absent, et son micro renommé « Abyss ».
 # Relançable sans effet de bord (les raccourcis sont remplacés).
 # Usage : double-clic sur scripts\install_windows.cmd
 #     ou : powershell -ExecutionPolicy Bypass -File scripts\install_windows.ps1
@@ -79,6 +80,64 @@ foreach ($dir in $Folders) {
     Write-Host "Raccourci : $path"
 }
 
+# 5. Micro virtuel : VB-CABLE (site officiel) + micro renommé « Abyss » (une seule demande admin)
+$CableUrl = "https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack45.zip"
+$MicName = "Abyss"
+try {
+    Add-Type -Path (Join-Path $PSScriptRoot "windows_audio.cs")
+    $captures = [AbyssSetup.Endpoints]::ListCaptures()
+} catch {
+    Write-Host "Impossible de lister les micros ($($_.Exception.Message)) : étape micro virtuel tentée quand même."
+    $captures = @()
+}
+$cableMics = @($captures | Where-Object { $_ -like "*|*VB-Audio Virtual Cable*" })
+$cableDriver = Get-PnpDevice -FriendlyName "*VB-Audio*" -ErrorAction SilentlyContinue
+$setupArgs = $null
+$needRestart = $false
+
+try {
+if ($cableMics.Count -eq 0 -and -not $cableDriver) {
+    Write-Host "VB-CABLE absent : téléchargement depuis vb-audio.com..."
+    $tmp = Join-Path $env:TEMP "abyss-vbcable"
+    Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+    New-Item -ItemType Directory -Path $tmp | Out-Null
+    $zip = Join-Path $tmp "VBCABLE_Driver_Pack.zip"
+    Invoke-WebRequest -Uri $CableUrl -OutFile $zip -UseBasicParsing
+    Expand-Archive -Path $zip -DestinationPath $tmp -Force
+    $exeName = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "*arm64*.exe" } elseif ([Environment]::Is64BitOperatingSystem) { "VBCABLE_Setup_x64.exe" } else { "VBCABLE_Setup.exe" }
+    $exe = Get-ChildItem $tmp -Filter $exeName -Recurse | Select-Object -First 1
+    if (-not $exe) { throw "Installeur VB-CABLE introuvable dans l'archive téléchargée." }
+    $setupArgs = @("-CableSetup", "`"$($exe.FullName)`"")
+} elseif ($cableMics.Count -gt 0 -and -not ($cableMics | Where-Object { $_ -like "$MicName|*" })) {
+    Write-Host "VB-CABLE présent : renommage de son micro en « $MicName »..."
+    $setupArgs = @()
+} elseif ($cableMics.Count -eq 0) {
+    Write-Host "VB-CABLE est installé mais son micro n'est pas encore visible : redémarre le PC puis relance l'installeur."
+    $needRestart = $true
+} else {
+    Write-Host "Micro virtuel « $MicName » déjà prêt."
+}
+} catch {
+    Write-Host "Téléchargement de VB-CABLE impossible ($($_.Exception.Message)). Installe-le depuis https://vb-audio.com/Cable/ puis relance l'installeur."
+    $setupArgs = $null
+}
+
+if ($null -ne $setupArgs) {
+    Write-Host "Windows va demander l'autorisation administrateur (installation du pilote / renommage du micro)."
+    try {
+        $argList = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$(Join-Path $PSScriptRoot 'windows_audio_setup.ps1')`"", "-Name", $MicName) + $setupArgs
+        $p = Start-Process powershell -Verb RunAs -ArgumentList $argList -Wait -PassThru
+        switch ($p.ExitCode) {
+            0 { Write-Host "Micro virtuel prêt : dans Discord, choisis « $MicName (VB-Audio Virtual Cable) » comme périphérique d'entrée." }
+            2 { Write-Host "VB-CABLE installé. Redémarre le PC puis relance l'installeur pour nommer le micro « $MicName »."; $needRestart = $true }
+            default { Write-Host "L'étape micro virtuel a échoué (code $($p.ExitCode)). Abyss fonctionne quand même ; tu peux installer VB-CABLE à la main." }
+        }
+    } catch {
+        Write-Host "Autorisation administrateur refusée : micro virtuel non installé/renommé. Relance l'installeur pour réessayer."
+    }
+}
+
 Write-Host ""
+if ($needRestart) { Write-Host "Pense à redémarrer le PC avant d'utiliser Abyss avec Discord." }
 Write-Host "Terminé. Lance Abyss depuis le Bureau ou le menu Démarrer."
 Write-Host "Logs : $env:USERPROFILE\.abyss\logs\abyss.log"

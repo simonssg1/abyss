@@ -25,15 +25,18 @@ uv sync
 
 **Windows**
 
-1. Installe [VB-CABLE](https://vb-audio.com/Cable/) (pilote du micro virtuel), puis redémarre.
-2. Récupère le dépôt (`git clone https://github.com/simonssg1/abyss.git`, ou « Code → Download ZIP » sur GitHub).
-3. Double-clique sur **`scripts\install_windows.cmd`**. Il installe uv via winget si besoin, prépare
-   l'environnement (Python 3.11 compris), génère l'icône et crée le raccourci **« Abyss »** sur le Bureau
-   et dans le menu Démarrer. Relançable sans risque.
-4. Lance Abyss depuis le raccourci : aucune fenêtre de console, logs dans `%USERPROFILE%\.abyss\logs\abyss.log`.
+1. Récupère le dépôt (`git clone https://github.com/simonssg1/abyss.git`, ou « Code → Download ZIP » sur GitHub).
+2. Double-clique sur **`scripts\install_windows.cmd`**. Il :
+   - installe uv via winget si besoin, prépare l'environnement (Python 3.11 compris) et l'icône ;
+   - crée le raccourci **« Abyss »** sur le Bureau et dans le menu Démarrer ;
+   - télécharge **VB-CABLE** depuis le site officiel s'il est absent, l'installe, et renomme son micro
+     **« Abyss »** (une demande d'autorisation administrateur, plus la confirmation de pilote de Windows).
+   Relançable sans risque. Si on te demande de redémarrer, redémarre puis relance-le pour finir le renommage.
+3. Lance Abyss depuis le raccourci : aucune fenêtre de console, logs dans `%USERPROFILE%\.abyss\logs\abyss.log`.
 
-Dans Abyss, choisis le micro, **CABLE Input** comme micro virtuel et ton casque. Dans Discord, l'entrée est
-**CABLE Output**. Si le micro ne capte rien : Paramètres Windows → Confidentialité et sécurité → Microphone →
+Dans Abyss, le micro virtuel est **CABLE Input** (détecté tout seul). Dans Discord, choisis
+**« Abyss (VB-Audio Virtual Cable) »** comme périphérique d'entrée.
+VB-CABLE est un logiciel donationware de VB-Audio : s'il te rend service, tu peux les soutenir sur vb-audio.com. Si le micro ne capte rien : Paramètres Windows → Confidentialité et sécurité → Microphone →
 autoriser les applications de bureau. Pas d'autorisation à donner pour les raccourcis sur Windows.
 
 ## Lancer Abyss
@@ -90,7 +93,7 @@ choisi un casque dans Réglages.
 
 ## Réglages Discord
 
-- Périphérique d'entrée : **BlackHole 2ch** (macOS) ou **CABLE Output** (Windows).
+- Périphérique d'entrée : **BlackHole 2ch** (macOS) ou **Abyss (VB-Audio Virtual Cable)** (Windows ; « CABLE Output » s'il n'a pas été renommé).
 - **Désactive** la suppression de bruit (Krisp), l'annulation d'écho et le contrôle automatique du gain :
   ils écrasent les effets.
 

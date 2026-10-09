@@ -8,6 +8,8 @@ from dataclasses import dataclass
 import sounddevice as sd
 
 VIRTUAL_MARKERS = ("blackhole", "cable input")
+# Tout périphérique du pilote VB-CABLE est virtuel, même renommé (ex. micro « Abyss (VB-Audio Virtual Cable) »).
+VIRTUAL_DRIVER_MARKERS = ("vb-audio virtual cable",)
 SPEAKER_MARKERS = ("speaker", "haut-parleur", "macbook")
 
 
@@ -64,6 +66,12 @@ def outputs(devices: list[Device] | None = None) -> list[Device]:
 
 def is_virtual(name: str) -> bool:
     low = name.lower()
+    return any(m in low for m in VIRTUAL_MARKERS + VIRTUAL_DRIVER_MARKERS)
+
+
+def is_virtual_target(name: str) -> bool:
+    """Sortie où Abyss doit écrire : BlackHole (macOS) ou CABLE Input (Windows)."""
+    low = name.lower()
     return any(m in low for m in VIRTUAL_MARKERS)
 
 
@@ -107,7 +115,8 @@ def auto_detect(devices: list[Device] | None = None) -> dict[str, Device | None]
     """Micro = entrée par défaut ; micro virtuel = BlackHole / CABLE Input ; casque = sortie par défaut."""
     devices = devices if devices is not None else list_devices()
     ins, outs = inputs(devices), outputs(devices)
-    virtual = next((d for d in outs if is_virtual(d.name)), None)
+    virtual = next((d for d in outs if is_virtual_target(d.name)), None) or \
+        next((d for d in outs if is_virtual(d.name)), None)
     mic = _default("input", ins)
     if mic is None or is_virtual(mic.name):
         mic = next((d for d in ins if not is_virtual(d.name)), mic)

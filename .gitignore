@@ -1,0 +1,19 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# macOS
+.DS_Store
+
+# Rendus et échantillons audio
+renders/
+samples/*.wav
+!samples/synthetic_voice.wav
+
+# Modèles IA (jamais commités)
+models/**/*.onnx
+models/**/*.pth
+models/**/*.index

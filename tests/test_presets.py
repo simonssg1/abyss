@@ -3,7 +3,7 @@ import tomllib
 import numpy as np
 
 from conftest import SR, stream
-from vocoder.presets import DEFAULT_PRESETS, build_chain, find_preset, load_presets, parse_presets
+from abyss.presets import DEFAULT_PRESETS, build_chain, find_preset, load_presets, parse_presets
 
 
 def test_default_presets_file():

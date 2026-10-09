@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 from scipy.io import wavfile
 
-from vocoder.__main__ import main
+from abyss.__main__ import main
 
 SAMPLE = Path(__file__).resolve().parents[1] / "samples" / "synthetic_voice.wav"
 

@@ -1,4 +1,4 @@
-# Vocoder : changeur de voix temps réel (macOS / Windows)
+# Abyss : changeur de voix temps réel (macOS / Windows)
 
 Micro réel → débruitage → effets → limiteur → **micro virtuel** (Discord, jeux) + retour casque optionnel.
 100 % local, effets DSP (robot, vocodeur, démon, hélium…). Voix IA (RVC/ONNX) prévue en v2.
@@ -10,32 +10,32 @@ Micro réel → débruitage → effets → limiteur → **micro virtuel** (Disco
 ```sh
 brew install blackhole-2ch uv
 # redémarre le Mac pour que BlackHole apparaisse
-git clone <ce dépôt> vocoder && cd vocoder
+git clone https://github.com/simonssg1/abyss.git && cd abyss
 uv sync
 ```
 
 **Windows (migration)** : installe [VB-CABLE](https://vb-audio.com/Cable/) (redémarrage) et [uv](https://docs.astral.sh/uv/), puis :
 
 ```sh
-gh repo clone simonssg1/vocoder
-cd vocoder
+gh repo clone simonssg1/abyss
+cd abyss
 uv sync
-uv run vocoder
+uv run abyss
 ```
 
 ## Lancement
 
 ```sh
-uv run vocoder                       # interface graphique
-uv run vocoder --list-devices        # périphériques détectés
-uv run vocoder --headless --preset Robot          # sans interface (Ctrl+C pour quitter)
-uv run vocoder --render IN.wav --preset Démon --out OUT.wav
-uv run vocoder --render-all samples/synthetic_voice.wav   # un fichier par preset dans renders/
+uv run abyss                       # interface graphique
+uv run abyss --list-devices        # périphériques détectés
+uv run abyss --headless --preset Robot          # sans interface (Ctrl+C pour quitter)
+uv run abyss --render IN.wav --preset Démon --out OUT.wav
+uv run abyss --render-all samples/synthetic_voice.wav   # un fichier par preset dans renders/
 ```
 
 Le micro virtuel est détecté tout seul (« BlackHole 2ch » sur macOS, « CABLE Input » sur Windows).
 Raccourcis globaux : `Ctrl+Alt+1…8` = presets, `Ctrl+Alt+0` = bypass, `Ctrl+Alt+M` = retour casque
-(modifiables dans `~/.vocoder/config.json`).
+(modifiables dans `~/.abyss/config.json`).
 
 ## Réglages Discord
 

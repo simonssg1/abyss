@@ -10,12 +10,12 @@ from dataclasses import dataclass
 import numpy as np
 import sounddevice as sd
 
-from vocoder.audio.ringbuffer import RingBuffer
-from vocoder.presets import Preset, build_chain
-from vocoder.processors.base import Chain, ChainSwitcher
-from vocoder.processors.denoise import Denoiser
+from abyss.audio.ringbuffer import RingBuffer
+from abyss.presets import Preset, build_chain
+from abyss.processors.base import Chain, ChainSwitcher
+from abyss.processors.denoise import Denoiser
 
-log = logging.getLogger("vocoder.engine")
+log = logging.getLogger("abyss.engine")
 
 BLOCK = 256
 RATES = (48000, 44100)
@@ -214,7 +214,7 @@ class AudioEngine:
 
     def _start_thread(self) -> None:
         self._stop.clear()
-        self._thread = threading.Thread(target=self._run, name="vocoder-dsp", daemon=True)
+        self._thread = threading.Thread(target=self._run, name="abyss-dsp", daemon=True)
         self._thread.start()
 
     def stop(self) -> None:

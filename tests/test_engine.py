@@ -4,9 +4,9 @@ import numpy as np
 from scipy.io import wavfile
 
 from conftest import BLOCK, SR
-from vocoder.__main__ import main
-from vocoder.audio.engine import AudioEngine, Pipeline
-from vocoder.presets import find_preset, load_presets
+from abyss.__main__ import main
+from abyss.audio.engine import AudioEngine, Pipeline
+from abyss.presets import find_preset, load_presets
 
 
 def test_engine_thread_with_simulated_callbacks(voice5):

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from vocoder.synth import synthetic_voice
+from abyss.synth import synthetic_voice
 
 SR = 48000
 BLOCK = 256

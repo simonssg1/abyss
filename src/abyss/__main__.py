@@ -12,7 +12,7 @@ from pathlib import Path
 
 import numpy as np
 
-log = logging.getLogger("vocoder")
+log = logging.getLogger("abyss")
 
 
 def read_wav_mono(path: Path, target_rate: int) -> np.ndarray:
@@ -36,7 +36,7 @@ def render(in_path: Path, preset, out_path: Path, sample_rate: int = 48000) -> n
     """Même chaîne que le temps réel (débruitage + preset + limiteur), par blocs de 256."""
     from scipy.io import wavfile
 
-    from vocoder.audio.engine import BLOCK, Pipeline
+    from abyss.audio.engine import BLOCK, Pipeline
 
     x = read_wav_mono(in_path, sample_rate)
     pipe = Pipeline(sample_rate)
@@ -57,8 +57,8 @@ def _safe_filename(name: str) -> str:
 
 
 def run_headless(presets, preset, cfg) -> int:
-    from vocoder.audio import devices as dv
-    from vocoder.audio.engine import AudioEngine
+    from abyss.audio import devices as dv
+    from abyss.audio.engine import AudioEngine
 
     devs = dv.list_devices()
     found = dv.auto_detect(devs)
@@ -88,7 +88,7 @@ def run_headless(presets, preset, cfg) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="vocoder", description="Changeur de voix temps réel")
+    parser = argparse.ArgumentParser(prog="abyss", description="Changeur de voix temps réel")
     parser.add_argument("--list-devices", action="store_true", help="liste les périphériques audio")
     parser.add_argument("--render", metavar="IN.wav", type=Path, help="applique un preset à un fichier")
     parser.add_argument("--preset", metavar="NOM", help="nom du preset")
@@ -103,13 +103,13 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
     if args.list_devices:
-        from vocoder.audio.devices import format_device_list
+        from abyss.audio.devices import format_device_list
 
         print(format_device_list())
         return 0
 
-    from vocoder.config import load_config
-    from vocoder.presets import find_preset, load_presets
+    from abyss.config import load_config
+    from abyss.presets import find_preset, load_presets
 
     presets, _ = load_presets(args.presets)
 
@@ -140,7 +140,7 @@ def main(argv: list[str] | None = None) -> int:
         name = args.preset or (cfg.last_preset if find_preset(presets, cfg.last_preset) else None)
         return run_headless(presets, pick(name), cfg)
 
-    from vocoder.gui.main_window import run_gui
+    from abyss.gui.main_window import run_gui
 
     return run_gui(presets, cfg, audio=not args.no_audio, quit_after=args.quit_after,
                    initial_preset=args.preset)

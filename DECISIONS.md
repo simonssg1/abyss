@@ -20,3 +20,11 @@
 - GUI : le stream casque reste ouvert dès qu'un casque est choisi ; la case « Retour casque » ne fait qu'activer l'écriture (pas de redémarrage des streams). Option `--no-audio` (et `--quit-after S`, cachée) pour le smoke test.
 - La fenêtre dépasse un peu 640 px de haut quand des avertissements sont affichés (contenu prioritaire sur la taille).
 - Vérification matérielle impossible depuis cette session : l'ouverture du micro (`check_input_settings`) reste bloquée sur l'autorisation micro de macOS pour ce processus. Les streams réels sont donc non testés ; le thread de traitement et les callbacks sont testés en simulation.
+
+## Refonte « Abyss » (2026-10-09)
+
+- D1 (choix utilisateur) : dépôt GitHub renommé `simonssg1/vocoder` → `simonssg1/abyss` (redirection GitHub conservée), remote local mis à jour.
+- D2 (choix utilisateur) : commande `vocoder` supprimée, seule `abyss` existe.
+- Renommage : paquet `src/abyss`, loggers `abyss.*`, thread `abyss-dsp`. Le type d'effet `vocoder` (vocodeur à canaux) et le module `processors/vocoder.py` gardent leur nom (c'est l'effet, pas l'app).
+- Config : `~/.abyss/config.json` ; au premier `load_config()`, l'ancienne `~/.vocoder/config.json` est copiée (jamais déplacée ni écrasée).
+- Le dossier local du dépôt reste `~/vocoder` (non renommé : hors périmètre, il n'a pas été demandé).

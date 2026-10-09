@@ -7,7 +7,7 @@ import sys
 
 from PySide6.QtCore import QObject, Signal
 
-log = logging.getLogger("vocoder.hotkeys")
+log = logging.getLogger("abyss.hotkeys")
 
 PERMISSION_HINT = ("Autorise ton terminal dans Réglages Système → Confidentialité et sécurité → "
                    "Accessibilité et Surveillance de l'entrée")

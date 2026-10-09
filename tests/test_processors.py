@@ -2,13 +2,13 @@ import numpy as np
 import pytest
 
 from conftest import BLOCK, SR, stream
-from vocoder.processors.base import BlockAdapter, Chain, ChainSwitcher
-from vocoder.processors.denoise import Denoiser
-from vocoder.processors.fx import FX_TYPES, PitchShift, make_fx
-from vocoder.processors.robot import RingModulator
-from vocoder.processors.rvc import RVCProcessor
-from vocoder.processors.vocoder import ChannelVocoder
-from vocoder.synth import synthetic_voice
+from abyss.processors.base import BlockAdapter, Chain, ChainSwitcher
+from abyss.processors.denoise import Denoiser
+from abyss.processors.fx import FX_TYPES, PitchShift, make_fx
+from abyss.processors.robot import RingModulator
+from abyss.processors.rvc import RVCProcessor
+from abyss.processors.vocoder import ChannelVocoder
+from abyss.synth import synthetic_voice
 
 FX_PARAMS = {
     "pitch_shift": {"semitones": -6}, "reverb": {"room_size": 0.9, "wet_level": 0.4},

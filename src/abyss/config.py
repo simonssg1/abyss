@@ -1,17 +1,35 @@
-"""Configuration utilisateur : ~/.vocoder/config.json (écriture atomique)."""
+"""Configuration utilisateur : ~/.abyss/config.json (écriture atomique)."""
 
 from __future__ import annotations
 
 import json
 import logging
 import os
+import shutil
 import tempfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-log = logging.getLogger("vocoder.config")
+log = logging.getLogger("abyss.config")
 
-CONFIG_PATH = Path.home() / ".vocoder" / "config.json"
+CONFIG_PATH = Path.home() / ".abyss" / "config.json"
+LEGACY_CONFIG_PATH = Path.home() / ".vocoder" / "config.json"
+
+
+def migrate_legacy_config(path: Path | None = None, legacy: Path | None = None) -> bool:
+    """Copie (sans la déplacer) l'ancienne config ~/.vocoder si la nouvelle n'existe pas encore."""
+    path = path or CONFIG_PATH
+    legacy = legacy or LEGACY_CONFIG_PATH
+    if path.exists() or not legacy.is_file():
+        return False
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(legacy, path)
+    except OSError as e:
+        log.warning("Migration de %s impossible : %s", legacy, e)
+        return False
+    log.info("Config migrée depuis %s", legacy)
+    return True
 
 
 def default_hotkeys() -> dict[str, str]:
@@ -36,6 +54,8 @@ class Config:
 
 
 def load_config(path: Path | None = None) -> Config:
+    if path is None:
+        migrate_legacy_config()
     path = path or CONFIG_PATH
     cfg = Config()
     try:

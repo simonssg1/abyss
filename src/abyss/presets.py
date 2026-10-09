@@ -7,12 +7,12 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from vocoder.processors.base import Chain
-from vocoder.processors.fx import FX_TYPES, make_fx
-from vocoder.processors.robot import RingModulator
-from vocoder.processors.vocoder import ChannelVocoder
+from abyss.processors.base import Chain
+from abyss.processors.fx import FX_TYPES, make_fx
+from abyss.processors.robot import RingModulator
+from abyss.processors.vocoder import ChannelVocoder
 
-log = logging.getLogger("vocoder.presets")
+log = logging.getLogger("abyss.presets")
 
 DEFAULT_PRESETS = Path(__file__).resolve().parents[2] / "presets.toml"
 EFFECT_TYPES = FX_TYPES + ("ring_mod", "vocoder", "rvc")

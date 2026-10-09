@@ -11,13 +11,13 @@ from PySide6.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QComboBox,
                                QGroupBox, QHBoxLayout, QLabel, QMainWindow, QProgressBar,
                                QPushButton, QSlider, QVBoxLayout, QWidget)
 
-from vocoder.audio import devices as dv
-from vocoder.audio.engine import AudioEngine
-from vocoder.config import Config, save_config
-from vocoder.hotkeys import PERMISSION_HINT, HotkeyBridge, pretty
-from vocoder.presets import Preset, find_preset
+from abyss.audio import devices as dv
+from abyss.audio.engine import AudioEngine
+from abyss.config import Config, save_config
+from abyss.hotkeys import PERMISSION_HINT, HotkeyBridge, pretty
+from abyss.presets import Preset, find_preset
 
-log = logging.getLogger("vocoder.gui")
+log = logging.getLogger("abyss.gui")
 
 NONE_LABEL = "(aucun)"
 STYLE = """
@@ -41,7 +41,7 @@ class MainWindow(QMainWindow):
         self.presets = presets
         self.cfg = cfg
         self.audio = audio
-        self.setWindowTitle("Vocoder")
+        self.setWindowTitle("Abyss")
         self.resize(420, 640)
         self.setStyleSheet(STYLE)
 
@@ -313,7 +313,7 @@ class MainWindow(QMainWindow):
 def run_gui(presets: list[Preset], cfg: Config, audio: bool = True, quit_after: float | None = None,
             initial_preset: str | None = None) -> int:
     app = QApplication.instance() or QApplication(sys.argv)
-    app.setApplicationName("Vocoder")
+    app.setApplicationName("Abyss")
     win = MainWindow(presets, cfg, audio=audio, initial_preset=initial_preset)
     win.show()
     if quit_after:

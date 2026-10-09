@@ -1,6 +1,6 @@
 import numpy as np
 
-from vocoder.audio.ringbuffer import RingBuffer
+from abyss.audio.ringbuffer import RingBuffer
 
 
 def test_roundtrip_with_wraparound():

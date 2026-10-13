@@ -14,7 +14,8 @@ Item {
     property alias pressed: slider.pressed
     property string unit: "%"
     property int decimals: 0
-    property real labelWidth: 96
+    property real labelWidth: Theme.formLabelWidth
+    property real valueWidth: Theme.formValueWidth
     // Par défaut : 0..1 affiché en %, sinon valeur + unité.
     property var formatValue: function(v) {
         return unit === "%" && slider.to <= 1 ? Math.round(v * 100) + " %"
@@ -22,22 +23,33 @@ Item {
     }
     signal moved(real value)
 
-    implicitHeight: Theme.controlHeight
+    // Étroit : libellé et valeur au-dessus, piste pleine largeur.
+    readonly property bool stacked: label !== "" && width < labelWidth + valueWidth + 200
+    implicitHeight: stacked ? grid.implicitHeight : Theme.controlHeight
     implicitWidth: 280
     opacity: enabled ? 1 : 0.4
 
-    RowLayout {
+    GridLayout {
+        id: grid
         anchors.fill: parent
-        spacing: Theme.s3
+        columns: root.stacked ? 2 : 3
+        columnSpacing: Theme.s3
+        rowSpacing: 0
         AbyssText {
             visible: root.label !== ""
             text: root.label
             role: "bodySmall"
-            Layout.preferredWidth: root.labelWidth
+            Layout.row: 0; Layout.column: 0
+            Layout.fillWidth: root.stacked
+            Layout.preferredWidth: root.stacked ? -1 : root.labelWidth
         }
         Slider {
             id: slider
+            Layout.row: root.stacked ? 1 : 0
+            Layout.column: root.stacked ? 0 : 1
+            Layout.columnSpan: root.stacked ? 2 : 1
             Layout.fillWidth: true
+            Layout.preferredHeight: Theme.controlHeight - (root.stacked ? Theme.s3 : 0)
             from: 0; to: 1; value: 0.5
             onMoved: root.moved(value)
             background: Rectangle {
@@ -74,7 +86,8 @@ Item {
             role: "caption"
             secondary: true
             horizontalAlignment: Text.AlignRight
-            Layout.preferredWidth: 56
+            Layout.row: 0; Layout.column: root.stacked ? 1 : 2
+            Layout.preferredWidth: root.valueWidth
         }
     }
 }

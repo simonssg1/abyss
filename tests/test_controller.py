@@ -2,6 +2,7 @@ import pytest
 from PySide6.QtWidgets import QApplication
 
 from abyss.config import Config
+from abyss.hotkeys import pretty
 from abyss.presets import load_presets
 from abyss.ui.controller import AppController, level_from_rms
 from abyss.ui.models import ALL, PresetFilterModel, PresetModel
@@ -37,7 +38,7 @@ def test_model_roles_and_placeholder(qapp):
     assert {"id", "name", "description", "category", "icon", "badge", "hotkey", "intensity", "toneLow",
             "toneHigh", "effects", "isUser", "enabled"} <= roles
     robot = model.get("robot")
-    assert robot["hotkey"] == "Ctrl+Alt+2" and robot["enabled"] and robot["intensity"] == 1.0
+    assert robot["hotkey"] == pretty("<ctrl>+<alt>+2") and robot["enabled"] and robot["intensity"] == 1.0
     ai = model.get("ai-voice")
     assert ai["badge"] == "soon" and not ai["enabled"] and ai["category"] == "IA"
 

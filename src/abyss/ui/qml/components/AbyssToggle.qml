@@ -6,6 +6,7 @@ Switch {
     id: control
     hoverEnabled: true
     spacing: Theme.s3
+    leftPadding: 0
     opacity: enabled ? 1 : 0.4
 
     indicator: Rectangle {

@@ -133,14 +133,15 @@ Item {
                 IconButton {
                     Layout.alignment: Qt.AlignHCenter
                     diameter: 64
-                    variant: "active"
+                    variant: app.bypass ? "active" : "neutral"
                     iconName: app.bypass ? "play" : "pause"
                     tooltip: app.bypass ? "Réactiver les effets" : "Bypass : voix sans effets"
                     onClicked: app.toggleBypass()
                 }
                 AbyssText {
-                    text: app.bypass ? "Effets en pause" : "Bypass"
-                    role: "caption"; secondary: true
+                    text: app.bypass ? "Réactiver les effets" : "Désactiver les effets"
+                    role: "caption"; secondary: !app.bypass
+                    color: app.bypass ? Theme.accent : Theme.textSecondary
                     Layout.alignment: Qt.AlignHCenter
                 }
             }

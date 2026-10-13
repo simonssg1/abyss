@@ -25,9 +25,14 @@ else:
     PERMISSION_HINT = "Relance Abyss ; si ça persiste, un antivirus ou un autre logiciel bloque peut-être le clavier"
 
 
-def pretty(combo: str) -> str:
-    """'<ctrl>+<alt>+1' → 'Ctrl+Alt+1'."""
+_MAC_SYMBOLS = {"ctrl": "⌃", "alt": "⌥", "shift": "⇧", "cmd": "⌘"}
+
+
+def pretty(combo: str, mac: bool = sys.platform == "darwin") -> str:
+    """'<ctrl>+<alt>+1' → 'Ctrl+Alt+1' (Windows) ou '⌃⌥1' (macOS)."""
     parts = [p.strip("<>") for p in combo.split("+")]
+    if mac:
+        return "".join(_MAC_SYMBOLS.get(p, p.capitalize() if len(p) > 1 else p.upper()) for p in parts)
     return "+".join(p.capitalize() if len(p) > 1 else p.upper() for p in parts)
 
 

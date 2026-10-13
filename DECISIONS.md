@@ -80,3 +80,13 @@
 - Micro virtuel Windows (choix utilisateur) : pas de pilote maison (pilote noyau signé par Microsoft requis ; le mode test casse les anti-triche). L'installeur télécharge `VBCABLE_Driver_Pack45.zip` depuis le site officiel (jamais redistribué dans le dépôt, licence donationware respectée), lance `VBCABLE_Setup_x64.exe -i -h` (ARM64/32 bits gérés), puis renomme le micro « CABLE Output » en « Abyss » via l'API Core Audio (`IPropertyStore`, `PKEY_Device_DeviceDesc`, C# chargé par `Add-Type`, `scripts/windows_audio.cs`). Une seule élévation UAC (`scripts/windows_audio_setup.ps1`). Discord affiche « Abyss (VB-Audio Virtual Cable) ». La sortie « CABLE Input » où écrit Abyss n'est pas renommée (détection inchangée).
 - Détection : tout périphérique du pilote « VB-Audio Virtual Cable » est virtuel (jamais choisi comme micro) ; la cible de sortie privilégie « CABLE Input » / BlackHole.
 - Échec de l'étape micro virtuel (refus UAC, téléchargement) : message clair, l'installation d'Abyss reste valide. Non testé sur un vrai PC (pas de compilateur C# ni de PowerShell sur le Mac de dev).
+
+## Revue UI (2026-10-13)
+
+- Bypass : bouton neutre tant que les effets sont actifs, plein accent seulement quand le bypass est engagé ; libellés « Désactiver les effets » / « Réactiver les effets ».
+- Éditeur : libellés « Nom » et « Description » au-dessus des champs ; égaliseur affiché en Hz / kHz.
+- Curseurs de formulaire : colonnes communes `Theme.formLabelWidth` (120) et `Theme.formValueWidth` (88) ; en largeur étroite, libellé + valeur au-dessus et piste pleine largeur.
+- Réglages : interrupteur « Réduire le bruit de fond » (plus de doublon avec le titre de section) ; interrupteurs alignés sur la colonne des libellés (`leftPadding: 0`).
+- Raccourcis affichés en notation Mac (⌃⌥1) sur macOS, « Ctrl+Alt+1 » ailleurs (`hotkeys.pretty`).
+- Liste des voix : fondu en bas tant qu'il reste des éléments à faire défiler.
+- Catégorie « IA » volontairement absente de l'éditeur : réservée à la future voix IA (placeholder « Bientôt »).

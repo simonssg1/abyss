@@ -68,6 +68,19 @@ Item {
                 onClicked: { app.selectPreset(model.id); root.presetChosen(model.id) }
                 onChevronClicked: root.editPreset(model.id)
             }
+            // Fondu bas : signale qu'il reste des voix à faire défiler.
+            Rectangle {
+                parent: list
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: Theme.s6
+                visible: !list.atYEnd
+                gradient: Gradient {
+                    GradientStop { position: 0; color: "transparent" }
+                    GradientStop { position: 1; color: Theme.bgDeep }
+                }
+            }
             AbyssText {
                 anchors.centerIn: parent
                 visible: list.count === 0

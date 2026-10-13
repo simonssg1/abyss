@@ -15,4 +15,5 @@ def test_gui_smoke_offscreen(tmp_path):
 
 
 def test_pretty_hotkey():
-    assert pretty("<ctrl>+<alt>+m") == "Ctrl+Alt+M"
+    assert pretty("<ctrl>+<alt>+m", mac=False) == "Ctrl+Alt+M"
+    assert pretty("<ctrl>+<alt>+m", mac=True) == "⌃⌥M"

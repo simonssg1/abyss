@@ -81,13 +81,13 @@ Item {
 
                 AbyssSlider {
                     Layout.fillWidth: true
-                    label: "Intensité"; labelWidth: 84
+                    label: "Intensité"
                     value: root.draft.intensity !== undefined ? root.draft.intensity : 1
                     onMoved: (v) => root.setValue("intensity", v)
                 }
                 AbyssRangeSlider {
                     Layout.fillWidth: true
-                    label: "Égaliseur"; labelWidth: 84
+                    label: "Égaliseur"
                     from: 50; to: 12000
                     first: root.draft.toneLow || 50
                     second: root.draft.toneHigh || 12000
@@ -110,6 +110,7 @@ Item {
             }
 
             AbyssText { text: "Identité"; role: "label"; Layout.topMargin: Theme.s2 }
+            AbyssText { text: "Nom"; role: "caption"; secondary: true; Layout.bottomMargin: -Theme.s2 }
             AbyssTextField {
                 id: nameField
                 Layout.fillWidth: true
@@ -118,6 +119,7 @@ Item {
                 maximumLength: 40
                 onTextEdited: root.setValue("name", text)
             }
+            AbyssText { text: "Description"; role: "caption"; secondary: true; Layout.bottomMargin: -Theme.s2 }
             AbyssTextField {
                 id: descField
                 Layout.fillWidth: true
@@ -177,7 +179,6 @@ Item {
                                     anchors.left: parent.left
                                     anchors.right: parent.right
                                     label: paramRow.param.label
-                                    labelWidth: 120
                                     from: paramRow.param.min; to: paramRow.param.max; stepSize: paramRow.param.step
                                     unit: paramRow.param.unit
                                     decimals: root.decimalsFor(paramRow.param.step)

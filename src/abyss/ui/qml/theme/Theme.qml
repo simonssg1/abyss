@@ -49,6 +49,8 @@ QtObject {
     readonly property int iconSize: 20
     readonly property int iconButton: 52
     readonly property int strokeThin: 1
+    readonly property int formLabelWidth: 120   // colonne libellé des curseurs de formulaire
+    readonly property int formValueWidth: 88    // colonne valeur (« 50 Hz – 12 kHz », « -12 demi-tons »)
 
     // Animation
     readonly property int durFast: 150

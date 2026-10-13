@@ -12,29 +12,41 @@ Item {
     property bool logarithmic: true
     property real first: 80
     property real second: 8000
-    property real labelWidth: 96
-    property var formatValue: function(v) { return v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + " k" : Math.round(v) + "" }
+    property real labelWidth: Theme.formLabelWidth
+    property real valueWidth: Theme.formValueWidth
+    property var formatValue: function(v) { return v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + " kHz" : Math.round(v) + " Hz" }
     signal edited(real first, real second)
 
     function toPos(v) { return logarithmic ? Math.log(v / from) / Math.log(to / from) : (v - from) / (to - from) }
     function fromPos(p) { return logarithmic ? from * Math.pow(to / from, p) : from + p * (to - from) }
 
-    implicitHeight: Theme.controlHeight
+    // Étroit : libellé et valeur au-dessus, piste pleine largeur.
+    readonly property bool stacked: label !== "" && width < labelWidth + valueWidth + 200
+    implicitHeight: stacked ? grid.implicitHeight : Theme.controlHeight
     implicitWidth: 280
     opacity: enabled ? 1 : 0.4
 
-    RowLayout {
+    GridLayout {
+        id: grid
         anchors.fill: parent
-        spacing: Theme.s3
+        columns: root.stacked ? 2 : 3
+        columnSpacing: Theme.s3
+        rowSpacing: 0
         AbyssText {
             visible: root.label !== ""
             text: root.label
             role: "bodySmall"
-            Layout.preferredWidth: root.labelWidth
+            Layout.row: 0; Layout.column: 0
+            Layout.fillWidth: root.stacked
+            Layout.preferredWidth: root.stacked ? -1 : root.labelWidth
         }
         C.RangeSlider {
             id: range
+            Layout.row: root.stacked ? 1 : 0
+            Layout.column: root.stacked ? 0 : 1
+            Layout.columnSpan: root.stacked ? 2 : 1
             Layout.fillWidth: true
+            Layout.preferredHeight: Theme.controlHeight - (root.stacked ? Theme.s3 : 0)
             from: 0; to: 1
             first.value: root.toPos(root.first)
             second.value: root.toPos(root.second)
@@ -73,7 +85,8 @@ Item {
             role: "caption"
             secondary: true
             horizontalAlignment: Text.AlignRight
-            Layout.preferredWidth: 72
+            Layout.row: 0; Layout.column: root.stacked ? 1 : 2
+            Layout.preferredWidth: root.valueWidth
         }
     }
 }

@@ -89,10 +89,10 @@ Item {
 
             SectionLabel { text: "Débruitage" }
             Card {
-                AbyssToggle { text: "Débruitage"; checked: app.denoiseOn; onToggled: app.setDenoise(checked) }
+                AbyssToggle { text: "Réduire le bruit de fond"; checked: app.denoiseOn; onToggled: app.setDenoise(checked) }
                 AbyssSlider {
                     Layout.fillWidth: true
-                    label: "Seuil"; labelWidth: 72
+                    label: "Seuil"
                     from: -80; to: -20; stepSize: 1; unit: "dB"
                     value: app.denoiseThreshold
                     enabled: app.denoiseOn
@@ -105,7 +105,7 @@ Item {
                 AbyssToggle { text: "M'entendre dans le casque"; checked: app.monitorOn; onToggled: app.setMonitor(checked) }
                 AbyssSlider {
                     Layout.fillWidth: true
-                    label: "Volume"; labelWidth: 72
+                    label: "Volume"
                     value: app.monitorVolume
                     enabled: app.monitorOn
                     onMoved: (v) => app.setMonitorVolume(v)
@@ -117,7 +117,7 @@ Item {
             Card {
                 AbyssSlider {
                     Layout.fillWidth: true
-                    label: "Gain"; labelWidth: 72
+                    label: "Gain"
                     from: -12; to: 12; stepSize: 1; unit: "dB"
                     formatValue: function(v) { return (v > 0 ? "+" : "") + v.toFixed(0) + " dB" }
                     value: app.outputGain

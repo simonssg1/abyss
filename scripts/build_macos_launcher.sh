@@ -28,6 +28,20 @@ BUNDLE="$STAGE/Abyss.app"
 mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Resources"
 cp "$REPO/src/abyss/ui/assets/icon/Abyss.icns" "$BUNDLE/Contents/Resources/Abyss.icns"
 
+# Python embarqué : copie de l'interpréteur du venv dans le bundle. macOS rattache ainsi le processus
+# d'Abyss à Abyss.app (nom « Abyss » et icône dans le Dock, au lieu de « python3.11 »).
+# Bibliothèques et site-packages restent ceux du dépôt (liens symboliques) : rien n'est dupliqué.
+read -r PY_BASE PY_LIB SITE < <("$UV_BIN" run --project "$REPO" --quiet python -c \
+  'import sys, sysconfig; print(sys.base_prefix, f"python{sys.version_info[0]}.{sys.version_info[1]}", sysconfig.get_paths()["purelib"])')
+PY_VERSION="${PY_LIB#python}"
+mkdir -p "$BUNDLE/Contents/lib/$PY_LIB"
+cp "$PY_BASE/bin/$PY_LIB" "$BUNDLE/Contents/MacOS/abyss-python"
+ln -s "$PY_BASE/lib/lib$PY_LIB.dylib" "$BUNDLE/Contents/lib/lib$PY_LIB.dylib"   # @executable_path/../lib
+ln -s "$SITE" "$BUNDLE/Contents/lib/$PY_LIB/site-packages"
+printf 'home = %s/bin\ninclude-system-site-packages = false\nversion = %s\n' "$PY_BASE" "$PY_VERSION" \
+  > "$BUNDLE/Contents/pyvenv.cfg"
+"$BUNDLE/Contents/MacOS/abyss-python" -c 'import abyss' || { echo "Python embarqué inutilisable." >&2; exit 1; }
+
 cat > "$BUNDLE/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

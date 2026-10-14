@@ -36,28 +36,26 @@ def set_process_name(name: str) -> None:
         pass
 
 
-def set_dock_name(name: str) -> None:
-    """Nom du Dock et du Moniteur d'activité (sinon « python3.11 »).
 
-    API privée LaunchServices (celle de Firefox et Chromium pour leurs processus) : le processus n'étant pas
-    un bundle, seul ce nom d'affichage peut être changé. À appeler une fois l'app enregistrée (fenêtre créée).
+def show_in_dock() -> None:
+    """Icône dans le Dock : Abyss.app déclare LSUIElement (lanceur invisible), que le Python embarqué hérite.
+
+    À appeler après QGuiApplication (NSApp existe alors).
     """
     if sys.platform != "darwin":
         return
     try:
-        ls = ctypes.cdll.LoadLibrary("/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices")
-        cf = ctypes.cdll.LoadLibrary("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")
-        cf.CFStringCreateWithCString.restype = ctypes.c_void_p
-        cf.CFStringCreateWithCString.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_uint32]
-        ls._LSGetCurrentApplicationASN.restype = ctypes.c_void_p
-        ls._LSSetApplicationInformationItem.restype = ctypes.c_int
-        ls._LSSetApplicationInformationItem.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p,
-                                                        ctypes.c_void_p, ctypes.c_void_p]
-        asn = ls._LSGetCurrentApplicationASN()
-        if not asn:
-            return
-        key = ctypes.c_void_p.in_dll(ls, "_kLSDisplayNameKey")
-        value = cf.CFStringCreateWithCString(None, name.encode(), 0x08000100)  # kCFStringEncodingUTF8
-        ls._LSSetApplicationInformationItem(-2, asn, key, value, None)  # -2 = kLSDefaultSessionID
+        objc = ctypes.cdll.LoadLibrary(ctypes.util.find_library("objc"))
+        objc.objc_getClass.restype = ctypes.c_void_p
+        objc.objc_getClass.argtypes = [ctypes.c_char_p]
+        objc.sel_registerName.restype = ctypes.c_void_p
+        objc.sel_registerName.argtypes = [ctypes.c_char_p]
+        send = objc.objc_msgSend
+        send.restype = ctypes.c_void_p
+        send.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        nsapp = send(objc.objc_getClass(b"NSApplication"), objc.sel_registerName(b"sharedApplication"))
+        send.restype = ctypes.c_bool
+        send.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_long]
+        send(nsapp, objc.sel_registerName(b"setActivationPolicy:"), 0)  # NSApplicationActivationPolicyRegular
     except Exception:
         pass

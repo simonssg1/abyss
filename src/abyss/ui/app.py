@@ -128,13 +128,14 @@ def run_app(presets, cfg, audio: bool = True, quit_after: float | None = None,
             initial_preset: str | None = None, defaults=None, single_instance: bool = True) -> int:
     from PySide6.QtCore import QTimer
 
-    from abyss.platform.macos import set_dock_name, set_process_name
+    from abyss.platform.macos import set_process_name, show_in_dock
     from abyss.platform.windows import set_app_user_model_id
     from abyss.ui.controller import AppController
 
     set_process_name("Abyss")
     set_app_user_model_id()
     app = create_app()
+    show_in_dock()
     if single_instance and notify_running_instance():
         log.info("Abyss tourne déjà : fenêtre existante ramenée au premier plan")
         return 0
@@ -149,7 +150,6 @@ def run_app(presets, cfg, audio: bool = True, quit_after: float | None = None,
     if window is None:
         return 1
     app.aboutToQuit.connect(controller.shutdown)
-    QTimer.singleShot(0, lambda: set_dock_name("Abyss"))
     if single_instance:
         controller._instance_server = start_instance_server(controller)
     QTimer.singleShot(0, controller.start_hotkeys)

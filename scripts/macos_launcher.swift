@@ -1,6 +1,7 @@
 // Lanceur natif d'Abyss (compilé par build_macos_launcher.sh).
-// Il lance `uv run --project <dépôt> abyss` comme processus enfant : macOS attribue ainsi les
-// autorisations (micro, Accessibilité, Surveillance de l'entrée) à « Abyss » et non à uv/Python.
+// Il lance `uv run --project <dépôt> <Abyss.app>/Contents/MacOS/abyss-python -m abyss` comme processus
+// enfant : macOS attribue ainsi les autorisations (micro, Accessibilité, Surveillance de l'entrée) à
+// « Abyss » et non à uv/Python, et l'interpréteur logé dans le bundle affiche « Abyss » dans le Dock.
 // Un nouveau double-clic relance la commande, qui ramène la fenêtre existante au premier plan.
 import Cocoa
 
@@ -30,7 +31,8 @@ final class Launcher: NSObject, NSApplicationDelegate {
         log?.write("=== \(stamp) lancement d'Abyss\n".data(using: .utf8)!)
         let p = Process()
         p.executableURL = URL(fileURLWithPath: uv)
-        p.arguments = ["run", "--project", repo, "abyss"]
+        let python = Bundle.main.bundleURL.appendingPathComponent("Contents/MacOS/abyss-python").path
+        p.arguments = ["run", "--project", repo, python, "-m", "abyss"]
         p.currentDirectoryURL = URL(fileURLWithPath: repo)
         if let log = log {
             p.standardOutput = log

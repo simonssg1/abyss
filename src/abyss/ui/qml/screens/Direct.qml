@@ -67,15 +67,22 @@ Item {
             }
         }
 
-        MicRing {
-            id: ring
-            readonly property real side: Math.max(150, Math.min(root.width - Theme.s6 * 2, root.height * 0.36, 260))
-            Layout.preferredWidth: side
-            Layout.preferredHeight: side
-            Layout.alignment: Qt.AlignHCenter
-            active: app.live
-            level: app.outputLevel
-            onClicked: app.toggleLive()
+        // L'anneau prend la hauteur restante (120–260) : les commandes du bas restent toujours visibles.
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.minimumHeight: 120
+            Layout.preferredHeight: 260
+            Layout.maximumHeight: 260
+            MicRing {
+                id: ring
+                width: Math.min(parent.width - Theme.s4 * 2, parent.height)
+                height: width
+                anchors.centerIn: parent
+                active: app.live
+                level: app.outputLevel
+                onClicked: app.toggleLive()
+            }
         }
 
         Waveform {

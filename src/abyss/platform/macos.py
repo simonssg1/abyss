@@ -34,3 +34,30 @@ def set_process_name(name: str) -> None:
             msg(info, b"setObject:forKey:", value, key, argtypes=(ctypes.c_void_p, ctypes.c_void_p))
     except Exception:
         pass
+
+
+def set_dock_name(name: str) -> None:
+    """Nom du Dock et du Moniteur d'activité (sinon « python3.11 »).
+
+    API privée LaunchServices (celle de Firefox et Chromium pour leurs processus) : le processus n'étant pas
+    un bundle, seul ce nom d'affichage peut être changé. À appeler une fois l'app enregistrée (fenêtre créée).
+    """
+    if sys.platform != "darwin":
+        return
+    try:
+        ls = ctypes.cdll.LoadLibrary("/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices")
+        cf = ctypes.cdll.LoadLibrary("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")
+        cf.CFStringCreateWithCString.restype = ctypes.c_void_p
+        cf.CFStringCreateWithCString.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_uint32]
+        ls._LSGetCurrentApplicationASN.restype = ctypes.c_void_p
+        ls._LSSetApplicationInformationItem.restype = ctypes.c_int
+        ls._LSSetApplicationInformationItem.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p,
+                                                        ctypes.c_void_p, ctypes.c_void_p]
+        asn = ls._LSGetCurrentApplicationASN()
+        if not asn:
+            return
+        key = ctypes.c_void_p.in_dll(ls, "_kLSDisplayNameKey")
+        value = cf.CFStringCreateWithCString(None, name.encode(), 0x08000100)  # kCFStringEncodingUTF8
+        ls._LSSetApplicationInformationItem(-2, asn, key, value, None)  # -2 = kLSDefaultSessionID
+    except Exception:
+        pass

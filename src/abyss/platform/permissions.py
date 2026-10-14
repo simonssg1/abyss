@@ -53,3 +53,16 @@ def microphone_status() -> str:
         return "unknown"
     return {AUTHORIZED: "authorized", DENIED: "denied", RESTRICTED: "denied",
             NOT_DETERMINED: "not_determined"}.get(status, "unknown")
+
+
+def request_microphone() -> None:
+    """macOS : ouvre brièvement l'entrée audio par défaut pour déclencher la demande d'accès au micro."""
+    if sys.platform != "darwin":
+        return
+    try:
+        import sounddevice as sd
+
+        with sd.InputStream(channels=1, blocksize=256):
+            sd.sleep(100)
+    except Exception:
+        pass

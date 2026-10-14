@@ -99,7 +99,7 @@ Item {
                     label: "Accès au micro"
                     help: app.micPermission === "denied"
                           ? "Autorise le micro : " + app.micSettingsPath + "."
-                          : "L'accès sera demandé au premier démarrage du direct."
+                          : "Réponds à la demande d'accès de macOS."
                 }
                 CheckRow {
                     status: app.hotkeysOk ? "ok" : "fail"

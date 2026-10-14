@@ -80,6 +80,13 @@ mv "$BUNDLE" "$APP"
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP" || true
 echo "App     : $APP"
 
+# Signature ad hoc = nouvelle identité à chaque build : les autorisations de l'ancien build ne correspondent
+# plus et macOS ne redemande pas. On efface celles d'Abyss (et seulement d'Abyss) pour qu'il redemande.
+for SERVICE in Microphone ListenEvent Accessibility; do
+  tccutil reset "$SERVICE" com.simonssg1.abyss >/dev/null 2>&1 || true
+done
+echo "Autorisations d'Abyss réinitialisées : macOS redemandera le micro et la surveillance du clavier."
+
 # 3. Alias sur le Bureau (remplace un ancien alias « Abyss », ne touche jamais à un vrai fichier)
 DESKTOP_ITEM="$HOME/Desktop/Abyss"
 if [[ -e "$DESKTOP_ITEM" ]]; then

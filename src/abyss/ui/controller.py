@@ -17,7 +17,7 @@ from abyss.audio import devices as dv
 from abyss.audio.engine import AudioEngine
 from abyss.config import Config, save_config
 from abyss.hotkeys import PERMISSION_HINT, HotkeyBridge
-from abyss.platform.permissions import microphone_status
+from abyss.platform.permissions import microphone_status, request_microphone
 from abyss.presets import TONE_MAX_HZ, TONE_MIN_HZ, Preset, apply_live, preset_from_dict, slugify
 from abyss.processors.schema import EFFECT_SCHEMAS, complete_effect, default_effect
 from abyss.processors.tap import VOICE_TAP
@@ -98,6 +98,13 @@ class AppController(QObject):
         self._hotkeys_status = "inactifs"
         self._mic_permission = microphone_status()
         log.info("Autorisation micro : %s", self._mic_permission)
+        self._permission_poll = QTimer(self)
+        self._permission_poll.setInterval(1000)
+        self._permission_poll.timeout.connect(self._poll_permission)
+        if self.audio and self._mic_permission == "not_determined":
+            # Demande d'accès dès le lancement (pas seulement au premier direct), puis suivi de la réponse.
+            threading.Thread(target=request_microphone, daemon=True).start()
+            self._permission_poll.start()
         self._preview_playing = False
         self._preview_id = ""
         self.level_source = None  # callable () -> (entrée, sortie), pour la démo et les captures
@@ -743,6 +750,12 @@ class AppController(QObject):
         if status != self._mic_permission:
             self._mic_permission = status
             self.permissionChanged.emit()
+
+    def _poll_permission(self) -> None:
+        self._update_permission()
+        if self._mic_permission != "not_determined":
+            self._permission_poll.stop()
+            log.info("Autorisation micro : %s", self._mic_permission)
 
     def _tick(self) -> None:
         m = self.engine.metrics
